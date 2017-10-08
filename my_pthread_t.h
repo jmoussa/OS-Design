@@ -28,8 +28,29 @@ typedef struct my_pthread_mutex_t {
 	/* add something here */
 } my_pthread_mutex_t;
 
-/* define your data structures here: */
+//Thread Control Block
+struct tcb {
+  u32_t status;
+  struct reg_context thread_context;
+  void *stack;
+  struct thread_info thread_params;
+  u32_t executedTime;
+  struct tcb *recoveryTask;
+  u32_t sched_field;
+  u32_t magic_key;
+};
 
+//Thread info to be passed in TCB struct
+struct thread_info {
+    void *(*run) (void *);
+    void *arg;
+    unsigned int type;
+    unsigned int stack_size;
+    int readyTime;
+    int execTime;      
+    int deadline;
+    struct thread_info *recov_info;
+};
 // Feel free to add your own auxiliary data structures
 
 
