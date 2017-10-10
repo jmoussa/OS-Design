@@ -16,6 +16,8 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <sys/time.h>
 
 typedef uint my_pthread_t;
 
@@ -53,6 +55,12 @@ struct thread_info {
 };
 // Feel free to add your own auxiliary data structures
 
+struct mutex {
+	int flag;
+};
+
+struct itimerval it; 
+struct sigaction act;
 
 /* Function Declarations: */
 
