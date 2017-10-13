@@ -10,16 +10,32 @@
 
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
+	struct tcb* thread=struct tcb* malloc(sizeof(struct tcb));
+	//Thread status is decided by scheduler
+	thread.thread_context.uc_link=;//initializes ucontext_t
+	thread.thread_context.uc_sigmask=;
+	thread.thread_context.uc_stack.ss_sp=sizeof(struct tcb);
+	thread.thread_context.uc_stack.ss_flags=0;
+	thread.thread_context.uc_stack.ss_size;
+	thread.stack=&thread;//initializes other parameters
+	thread.thread_params.run=function;
+	thread.thread_params.arg=arg;
+	//attaches function to context
+	makecontext(&thread.thread_context,function,arg);
+	add(&thread);//adds TCB to priority queue
 	return 0;
 };
 
 /* give CPU pocession to other user level threads voluntarily */
 int my_pthread_yield() {
+	swapcontext(,)
 	return 0;
 };
 
 /* terminate a thread */
 void my_pthread_exit(void *value_ptr) {
+	//removes thread from queue
+	free(value_ptr);//removes thread from memory
 };
 
 /* wait for thread termination */
