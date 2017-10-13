@@ -16,7 +16,6 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ucontext.h>
 
 typedef uint my_pthread_t;
 
@@ -31,8 +30,9 @@ typedef struct my_pthread_mutex_t {
 
 //Thread Control Block
 struct tcb {
-  u32_t status;//holds status info of current thread
-  struct ucontext_t thread_context;//stores the context of the thread
+  u32_t status; //holds status info of current thread
+  struct reg_context thread_context;//stores the context of the thread
+  void *stack;//pointer to the stack of the thread
   struct thread_info thread_params;//thread info
   u32_t executedTime;//tells how long program has been running
   struct tcb *recoveryTask;
@@ -45,21 +45,14 @@ struct thread_info {
     void *(*run) (void *);//function
     void *arg;//arguments for function
     unsigned int type;
+    unsigned int stack_size;//how big the thread variables are 
     int readyTime;		
     int execTime;      
     int deadline;
     struct thread_info *recov_info;
 };
-
-
 // Feel free to add your own auxiliary data structures
 
-struct mutex {
-	int flag;
-};
-
-struct itimerval it; 
-struct sigaction act;
 
 /* Function Declarations: */
 
