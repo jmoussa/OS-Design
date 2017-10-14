@@ -9,7 +9,16 @@
 #define MY_PTHREAD_T_H
 
 #define _GNU_SOURCE
-
+//macro my_ to pthread functions
+#define pthread_create(a, b, c, d) my_pthread_create(a, b, c, d)
+#define pthread_yield() my_pthread_yield()
+#define pthread_join(a, b) my_pthread_join(a, b)
+#define my_pthread_exit(x) my_my_pthread_exit(x)
+//macro my_ to mutex functions
+#define pthread_mutex_init(a, b)  my_pthread_mutex_init(a, b) 
+#define pthread_mutex_lock(a) my_pthread_mutex_lock(a)
+#define pthread_mutex_unlock(a) my_pthread_mutex_unlock(a)
+#define pthread_mutex_destroy(a)	my_pthread_mutex_destroy(a)
 /* include lib header files that you need here: */
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -19,6 +28,8 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <ucontext.h>
+#include <errno.h>
+#include <atomic.h>
 
 typedef uint my_pthread_t;
 
@@ -32,7 +43,7 @@ typedef struct my_pthread_mutex_t {
 } my_pthread_mutex_t;
 
 //Thread Control Block
-struct tcb {
+struct tcb{
   u32_t status;//holds status info of current thread
   struct ucontext_t thread_context;//stores the context of the thread
   struct thread_info thread_params;//thread info
@@ -47,6 +58,7 @@ struct thread_info {
     void *(*run) (void *);//function
     void *arg;//arguments for function
     unsigned int type;
+    bool joinable;
     int readyTime;		
     int execTime;      
     int deadline;
