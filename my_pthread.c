@@ -83,16 +83,17 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
     //get current thread
-    while(__sync_lock_test_and_set(&mutex->lock, 1) != 0){ //shared mutex was locked
-        //spin_lock(lock);
+    my_pthread_mutex_t *lock;
+    while(__sync_lock_test_and_set(mutex->lock, 1) != 0){ //shared mutex was locked
+        spin_aquire(lock);
         if(mutex->lock == 1){
             //put current thread in waitQueue
-            //spin_unlock(lock);
-            //put thread to sleep
+            spin_release(lock);
+            //put thread to sleep?
             my_pthread_yield();
             return 1; //thread is in waiting queue and blocked by 
         }else{
-            //spin_unlock(lock);
+            spin_release(lock);
         }
     }
     return 0; //got the lock
@@ -101,7 +102,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
     //load next thread in the queue
-    __sync_lock_release(&mutex);
+    __sync_lock_release(mutex);
     //if next!=null then wake up the next thread
     return 0;
 }
@@ -114,3 +115,17 @@ int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
     return 0;
 }
 
+void spin_aquire(my_pthread_mutex_t *mutex){
+    my_pthread_mutex_init(mutex, NULL);
+    while(1){
+        while(lock==1);
+        if(__sync_lock_test_and_set(&mutex->lock, 1)==0){
+            break;
+        }
+    }
+}
+
+void spin_release(my_pthread_mutex_t *mutex){
+    if(!mutex)return;
+    mutex->lock = 0;
+}
