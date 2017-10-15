@@ -114,10 +114,10 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
     spin_aquire(LOCK);
-    //load next thread in the queue
-    __sync_lock_release(mutex);i
+    //TODO: load next thread in the queue
+    __sync_lock_release(mutex);
     spin_release(LOCK);
-    //if next!=null then wake up the next thread
+    //if nextThread!=null then wake up the next thread
     return 0;
 }
 
@@ -128,4 +128,3 @@ int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
     mutex->flags = 0;
     return 0;
 }
-
