@@ -7,6 +7,7 @@
 // iLab Server:
 
 #include "my_pthread_t.h"
+#include <errno.h>
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
 	struct tcb *my_tcb=struct tcb * malloc(sizeof(struct tcb));
@@ -68,9 +69,12 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
 
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
-    while(__sync_lock_test_and_set(mutex->&lock, 1)){
-        while(mutex->lock);
+    //get current thread
+    while(__sync_lock_test_and_set(&mutex->lock, 1) != 0){ //shared mutex was not 0->locked
+        //TODO: put current thread in a wait queue
+        my_pthread_yield();
     }
+    
     return 0;
 }
 
@@ -83,7 +87,8 @@ int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
 
 /* destroy the mutex */
 int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
-	mutex->lock = -1;
+	if(!mutex)return EINVAL;
+    mutex->lock = -1;
     mutex->flags = 0;
     return 0;
 }
