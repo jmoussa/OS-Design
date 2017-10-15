@@ -50,6 +50,7 @@ struct thread_info {
 typedef struct threadControlBlock {
 	/* add something here */
     my_pthread_t tid;
+    my_pthread_t ptid;
     void * retval;
     void ** join_retval;
     uint hasExited;//holds status info of current thread
@@ -77,11 +78,13 @@ struct Node{
 struct Node Queue[4]; // all ready threads
 struct Node RunningQueue; //ready threads that we want to run in round robin
 struct Node WaitingQueue; // all waiting threads
-
+struct Node CompletedQueue; // free stack in ucontext and put tcb of completed thread in Completed Queue
+//tcb tcbs[1000]; // all the tcbs that you could have are intialized.
+sigset_t sigProcMask;
 // Feel free to add your own auxiliary data structures
 
 struct itimerval it; 
-struct sigaction act;
+struct sigaction act, oact;
 
 /* Function Declarations: */
 
