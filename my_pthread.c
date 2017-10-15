@@ -103,7 +103,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
         if(mutex->lock == 1){ //value of mutex->lock is 
             my_pthread_yield();
             spin_release(LOCK);
-            return 1; //thread is in waiting queue and blocked
+            //thread is in waiting queue and blocked
         }else{
             spin_release(LOCK);
         }
