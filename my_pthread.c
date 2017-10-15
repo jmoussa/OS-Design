@@ -71,17 +71,24 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
     //get current thread
     while(__sync_lock_test_and_set(&mutex->lock, 1) != 0){ //shared mutex was not 0->locked
-        //TODO: put current thread in a wait queue
+        //spin_lock(lock);
+        if(mutex->lock == 1){
+            //put current thread in waitQueue
+            //spin_unlock(lock);
+            //put thread to sleep
+            return 1; //thread is in waiting queue and blocked by 
+        }else{
+            //spin_unlock(lock);
+        }
         my_pthread_yield();
     }
-    
-    return 0;
+    return 0; //got the lock
 }
 
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
     //load next thread in the queue
-    __sync_lock_release(mutex);
+    __sync_lock_release(&mutex);
     //if next!=null then wake up the next thread
     return 0;
 }
