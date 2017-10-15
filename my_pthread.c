@@ -97,14 +97,11 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
 
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
-    //get current thread
     my_pthread_mutex_t *lock;
     while(__sync_lock_test_and_set(mutex->lock, 1) != 0){ //shared mutex was locked
         spin_aquire(lock);
         if(mutex->lock == 1){
-            //put current thread in waitQueue
             spin_release(lock);
-            //put thread to sleep?
             my_pthread_yield();
             return 1; //thread is in waiting queue and blocked by 
         }else{
