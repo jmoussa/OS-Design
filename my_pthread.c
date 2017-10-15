@@ -2,16 +2,29 @@
 // Author:	Yujie REN
 // Date:	09/23/2017
 
-// name:
-// username of iLab:
+// name: nandan Thakkar
+// username of iLab: nt284
 // iLab Server:
 
 #include "my_pthread_t.h"
 #include <errno.h>
+
+
+
+void scheduler(int sig){
+    
+}
+
+
+int my_pthread_init(){
+    sigemptyset(&sigProcMask);
+    sigaddset(&sigProcMask, SIGPROF);
+}
+
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
-	struct tcb *my_tcb=struct tcb * malloc(sizeof(struct tcb));
-	thread=&tcb;
+    
+	tcb *my_tcb=(tcb *) malloc(sizeof(tcb));
 	//Thread status is decided by scheduler
 	thread.thread_context.uc_link=;//initializes ucontext_t
 	thread.thread_context.uc_sigmask=;
