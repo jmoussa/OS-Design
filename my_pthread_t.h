@@ -29,20 +29,38 @@
 #include <sys/time.h>
 #include <ucontext.h>
 #include <errno.h>
-#include <atomic.h>
+//#include <atomic.h>
 
 typedef uint my_pthread_t;
+
+//Thread info to be passed in TCB struct
+struct thread_info {
+    void *(*run) (void *);//function
+    void *arg;//arguments for function
+    unsigned int type;
+    int joinable;
+    int readyTime;
+    int execTime;
+    int deadline;
+    struct thread_info *recov_info;
+};
+
 
 //Thread Control Block
 typedef struct threadControlBlock {
 	/* add something here */
-    u32_t status;//holds status info of current thread
-    struct ucontext_t thread_context;//stores the context of the thread
+    my_pthread_t tid;
+    void * retval;
+    void ** join_retval;
+    uint hasExited;//holds status info of current thread
+    uint hasJoined;
+    uint hasYielded;
+    ucontext_t thread_context;//stores the context of the thread
     struct thread_info thread_params;//thread info
-    u32_t executedTime;//tells how long program has been running
-    struct tcb *recoveryTask;
-    u32_t sched_field;//used by scheduler object
-    u32_t magic_key;//used for debugging
+    uint executedTime;//tells how long program has been running
+    struct tcb *childThread;
+    uint priority;//used by scheduler object
+    uint magic_key;//used for debugging
 } tcb; 
 
 // MUTEX Struct Definition
@@ -51,19 +69,14 @@ typedef struct my_pthread_mutex_t {
     int flags; //TODO: Define further?
 } my_pthread_mutex_t;
 
-
-//Thread info to be passed in TCB struct
-struct thread_info {
-    void *(*run) (void *);//function
-    void *arg;//arguments for function
-    unsigned int type;
-    bool joinable;
-    int readyTime;		
-    int execTime;      
-    int deadline;
-    struct thread_info *recov_info;
+struct Node{
+    tcb * head;
+    struct Node * next;
 };
 
+struct Node Queue[4]; // all ready threads
+struct Node RunningQueue; //ready threads that we want to run in round robin
+struct Node WaitingQueue; // all waiting threads
 
 // Feel free to add your own auxiliary data structures
 
