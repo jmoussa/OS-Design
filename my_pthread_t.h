@@ -33,25 +33,24 @@
 
 typedef uint my_pthread_t;
 
+//Thread Control Block
 typedef struct threadControlBlock {
 	/* add something here */
+    u32_t status;//holds status info of current thread
+    struct ucontext_t thread_context;//stores the context of the thread
+    struct thread_info thread_params;//thread info
+    u32_t executedTime;//tells how long program has been running
+    struct tcb *recoveryTask;
+    u32_t sched_field;//used by scheduler object
+    u32_t magic_key;//used for debugging
 } tcb; 
 
-/* mutex struct definition */
+// MUTEX Struct Definition
 typedef struct my_pthread_mutex_t {
-	/* add something here */
+	int lock; //0 or 1, set to 0(unlocked) by default
+    int flags; //TODO: Define further?
 } my_pthread_mutex_t;
 
-//Thread Control Block
-struct tcb{
-  u32_t status;//holds status info of current thread
-  struct ucontext_t thread_context;//stores the context of the thread
-  struct thread_info thread_params;//thread info
-  u32_t executedTime;//tells how long program has been running
-  struct tcb *recoveryTask;
-  u32_t sched_field;//used by scheduler object
-  u32_t magic_key;//used for debugging
-};
 
 //Thread info to be passed in TCB struct
 struct thread_info {
@@ -67,10 +66,6 @@ struct thread_info {
 
 
 // Feel free to add your own auxiliary data structures
-
-struct mutex {
-	int flag;
-};
 
 struct itimerval it; 
 struct sigaction act;

@@ -61,21 +61,30 @@ return 0;
 
 /* initial the mutex lock */
 int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
-	return 0;
+	mutex->lock = 0;
+    mutex->flags = 0;
+    return 0;
 }
 
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
-	return 0;
+    while(__sync_lock_test_and_set(mutex->&lock, 1)){
+        while(mutex->lock);
+    }
+    return 0;
 }
 
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
-	return 0;
+    __sync_synchronize();
+    mutex->&lock = 0;
+    return 0;
 }
 
 /* destroy the mutex */
 int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
-	return 0;
+	mutex->lock = -1;
+    mutex->flags = 0;
+    return 0;
 }
 
