@@ -10,6 +10,21 @@
 #include <errno.h>
 
 
+void spin_aquire(my_pthread_mutex_t *mutex){
+    my_pthread_mutex_init(mutex, NULL);
+    while(1){
+        while(lock==1);
+        if(__sync_lock_test_and_set(&mutex->lock, 1)==0){
+            break;
+        }
+    }
+}
+
+void spin_release(my_pthread_mutex_t *mutex){
+    if(!mutex)return;
+    mutex->lock = 0;
+}
+
 
 void scheduler(int sig){
     
