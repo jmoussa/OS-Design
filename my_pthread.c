@@ -80,8 +80,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
-    __sync_synchronize();
-    mutex->&lock = 0;
+    //load next thread in the queue
+    __sync_lock_release(mutex);
+    //if next!=null then wake up the next thread
     return 0;
 }
 
