@@ -9,6 +9,7 @@
 #include "my_pthread_t.h"
 #include <errno.h>
 
+my_pthread_mutex_t *LOCK;
 
 void spin_aquire(my_pthread_mutex_t *mutex){
     my_pthread_mutex_init(mutex, NULL);
@@ -97,15 +98,14 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
 
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
-    my_pthread_mutex_t *lock;
     while(__sync_lock_test_and_set(mutex->lock, 1) != 0){ //shared mutex was locked
-        spin_aquire(lock);
-        if(mutex->lock == 1){
-            spin_release(lock);
+        spin_aquire(LOCK);
+        if(mutex->lock == 1){ //value of mutex->lock is 
             my_pthread_yield();
-            return 1; //thread is in waiting queue and blocked by 
+            spin_release(LOCK);
+            return 1; //thread is in waiting queue and blocked
         }else{
-            spin_release(lock);
+            spin_release(LOCK);
         }
     }
     return 0; //got the lock
@@ -113,8 +113,10 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
+    spin_aquire(LOCK);
     //load next thread in the queue
-    __sync_lock_release(mutex);
+    __sync_lock_release(mutex);i
+    spin_release(LOCK);
     //if next!=null then wake up the next thread
     return 0;
 }
@@ -122,22 +124,8 @@ int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
 /* destroy the mutex */
 int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
 	if(!mutex)return EINVAL;
-    mutex->lock = -1;
+    mutex->lock = 0;
     mutex->flags = 0;
     return 0;
 }
 
-void spin_aquire(my_pthread_mutex_t *mutex){
-    my_pthread_mutex_init(mutex, NULL);
-    while(1){
-        while(lock==1);
-        if(__sync_lock_test_and_set(&mutex->lock, 1)==0){
-            break;
-        }
-    }
-}
-
-void spin_release(my_pthread_mutex_t *mutex){
-    if(!mutex)return;
-    mutex->lock = 0;
-}
