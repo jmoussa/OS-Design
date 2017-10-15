@@ -95,11 +95,16 @@ sigset_t sigProcMask;
 struct itimerval it; 
 struct sigaction act, oact;
 
-/* Function Declarations: */
 //adds tcb to highest priority queue
 void enqueue(struct tcb* my_tcb);
 //search for specified thread
 void search(my_pthread_t thread);
+
+/* Function Declarations: */
+/*spin-locks*/
+void spin_acquire(my_pthread_mutex_t *mutex);
+void spin_release(my_pthread_mutex_t * mutex);
+
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg);
 

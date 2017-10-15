@@ -9,6 +9,22 @@
 #include "my_pthread_t.h"
 #include <errno.h>
 
+my_pthread_mutex_t *LOCK;
+
+void spin_aquire(my_pthread_mutex_t *mutex){
+    my_pthread_mutex_init(mutex, NULL);
+    while(1){
+        while(lock==1);
+        if(__sync_lock_test_and_set(&mutex->lock, 1)==0){
+            break;
+        }
+    }
+}
+
+void spin_release(my_pthread_mutex_t *mutex){
+    if(!mutex)return;
+    mutex->lock = 0;
+}
 
 
 void scheduler(int sig){
@@ -31,6 +47,11 @@ void enqueue(struct tcb my_tcb){
 //search for specified thread
 int search(my_pthread_t thread,struct tcb* tcb_ptr){
 	//return 0 means success
+	for(struct Node*ptr=&CompletedQueue; ptr->next=NULL ;ptr=ptr->next){
+		if(thread==ptr->head->tid){
+			return 0;
+		}
+	}
 	for(int i=0; i<4 ;i++){
 		
 	for(struct Node*ptr=&Queue[i]; ptr->next=NULL ;ptr=ptr->next){
@@ -47,11 +68,6 @@ int search(my_pthread_t thread,struct tcb* tcb_ptr){
 	for(struct Node*ptr=&WaitingQueue; ptr->next=NULL ;ptr=ptr->next){
 		if(thread==ptr->head->tid){
 			return 0; 
-		}
-	}
-	for(struct Node*ptr=&CompletedQueue; ptr->next=NULL ;ptr=ptr->next){
-		if(thread==ptr->head->tid){
-			return 0;
 		}
 	}
 	return 1;//error tcb not found
@@ -123,17 +139,14 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
 
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
-    //get current thread
-    while(__sync_lock_test_and_set(&mutex->lock, 1) != 0){ //shared mutex was locked
-        //spin_lock(lock);
-        if(mutex->lock == 1){
-            //put current thread in waitQueue
-            //spin_unlock(lock);
-            //put thread to sleep
+    while(__sync_lock_test_and_set(mutex->lock, 1) != 0){ //shared mutex was locked
+        spin_aquire(LOCK);
+        if(mutex->lock == 1){ //value of mutex->lock is 
             my_pthread_yield();
-            return 1; //thread is in waiting queue and blocked by 
+            spin_release(LOCK);
+            return 1; //thread is in waiting queue and blocked
         }else{
-            //spin_unlock(lock);
+            spin_release(LOCK);
         }
     }
     return 0; //got the lock
@@ -141,17 +154,18 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
-    //load next thread in the queue
-    __sync_lock_release(&mutex);
-    //if next!=null then wake up the next thread
+    spin_aquire(LOCK);
+    //TODO: load next thread in the queue
+    __sync_lock_release(mutex);
+    spin_release(LOCK);
+    //if nextThread!=null then wake up the next thread
     return 0;
 }
 
 /* destroy the mutex */
 int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
 	if(!mutex)return EINVAL;
-    mutex->lock = -1;
+    mutex->lock = 0;
     mutex->flags = 0;
     return 0;
 }
-

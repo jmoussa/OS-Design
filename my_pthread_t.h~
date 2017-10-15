@@ -85,9 +85,9 @@ struct Node* back0=&Queue[0];
 struct Node* back1=&Queue[1];
 struct Node* back2=&Queue[2];
 struct Node* back3=&Queue[3];
-struct Node* backR=&Queue[0];//for running queue
-struct Node* backW=&Queue[0];//for waiting queue
-struct Node* backC=&Queue[0];//for complete queue
+struct Node* backR=&RunningQueue;//for running queue
+struct Node* backW=&WaitingQueue;//for waiting queue
+struct Node* backC=&CompletedQueue;//for complete queue
 
 sigset_t sigProcMask;
 // Feel free to add your own auxiliary data structures
@@ -96,10 +96,17 @@ struct itimerval it;
 struct sigaction act, oact;
 
 /* Function Declarations: */
+<<<<<<< HEAD
 //adds tcb to highest priority queue
 void enqueue(struct tcb* my_tcb);
 //search for specified thread
 void search(my_pthread_t thread);
+=======
+/*spin-locks*/
+void spin_acquire(my_pthread_mutex_t *mutex);
+void spin_release(my_pthread_mutex_t * mutex);
+
+>>>>>>> 1cd7a596bbf7040d80ea2bab9848ef91cfc30492
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg);
 
