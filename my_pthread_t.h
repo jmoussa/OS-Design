@@ -31,6 +31,7 @@
 #include <errno.h>
 
 typedef uint my_pthread_t;
+int tcb_num=0;
 
 //Thread info to be passed in TCB struct
 struct thread_info {
@@ -52,9 +53,7 @@ typedef struct threadControlBlock {
     my_pthread_t ptid;
     void * retval;
     void ** join_retval;
-    uint hasExited;//holds status info of current thread
-    uint hasJoined;
-    uint hasYielded;
+    uint status;//0=joined 1=yielded 2=exited 3=running
     ucontext_t thread_context;//stores the context of the thread
     struct thread_info thread_params;//thread info
     uint executedTime;//tells how long program has been running
@@ -70,20 +69,35 @@ typedef struct my_pthread_mutex_t {
 } my_pthread_mutex_t;
 
 struct Node{
-    tcb * head;
+    struct tcb  head;
     struct Node * next;
 };
+
 
 struct Node Queue[4]; // all ready threads
 struct Node RunningQueue; //ready threads that we want to run in round robin
 struct Node WaitingQueue; // all waiting threads
 struct Node CompletedQueue; // free stack in ucontext and put tcb of completed thread in Completed Queue
-//tcb tcbs[1000]; // all the tcbs that you could have are intialized.
+//struct tcb tcbs[1000]; // all the tcbs that you could have are intialized.
+//pointers to back of each queue
+struct Node* back0=&Queue[0];
+struct Node* back1=&Queue[1];
+struct Node* back2=&Queue[2];
+struct Node* back3=&Queue[3];
+struct Node* backR=&RunningQueue;//for running queue
+struct Node* backW=&WaitingQueue;//for waiting queue
+struct Node* backC=&CompletedQueue;//for complete queue
+
 sigset_t sigProcMask;
 // Feel free to add your own auxiliary data structures
 
 struct itimerval it; 
 struct sigaction act, oact;
+
+//adds tcb to highest priority queue
+void enqueue(struct tcb* my_tcb);
+//search for specified thread
+void search(my_pthread_t thread);
 
 /* Function Declarations: */
 /*spin-locks*/
