@@ -29,7 +29,6 @@
 #include <sys/time.h>
 #include <ucontext.h>
 #include <errno.h>
-//#include <atomic.h>
 
 typedef uint my_pthread_t;
 int tcb_num=0;
