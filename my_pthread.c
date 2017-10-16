@@ -37,49 +37,44 @@ int my_pthread_init(){
     sigaddset(&sigProcMask, SIGPROF);
 }
 //add tcb to queue
-void enqueue(struct tcb my_tcb){
-	struct Node* end= struct Node malloc(sizeof(Node));
-	back0.next=end;
-	end.head=my_tcb;
-	end.next=NULL;
-	back0=end;
+bool enqueue(struct tcb* my_tcb,int a){
+	struct Node end= malloc(sizeof(Node));
+	end->head=my_tcb;
+	end->next=NULL;
+	if(*front[a]==NULL){
+		*front[a]=end;
+	}
+	else{
+		*back[a]->next=end;
+	}
+	*back[a]=end;
+	my_tcb.thread_params.queue=a;
+	return true;
 }
-//search for specified thread
-int search(my_pthread_t thread,struct tcb* tcb_ptr){
-	//return 0 means success
-	for(struct Node*ptr=&CompletedQueue; ptr->next=NULL ;ptr=ptr->next){
-		if(thread==ptr->head->tid){
-			return 0;
-		}
+
+//removes tcb to from queue
+bool dequeue(int a){
+	struct Node temp=*front[a];
+	*front[a]=*front[a].next;
+	if(*front[a]==NULL)}{
+		*end[a]=NULL;
 	}
-	for(int i=0; i<4 ;i++){
-		
-	for(struct Node*ptr=&Queue[i]; ptr->next=NULL ;ptr=ptr->next){
-		if(thread==ptr->head->tid){
-			return 0;
-		}
-	}
+	free(temp);
+	return true;
 }
-	for(struct Node*ptr=&RunningQueue; ptr->next=NULL ;ptr=ptr->next){
-		if(thread==ptr->head->tid){
-			return 0;
-		}
-	}
-	for(struct Node*ptr=&WaitingQueue; ptr->next=NULL ;ptr=ptr->next){
-		if(thread==ptr->head->tid){
-			return 0; 
-		}
-	}
-	return 1;//error tcb not found
+
+//looks at next value in queue
+struct tcb* peek(){
+	return *front[0];
 }
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
    
-	tcb *my_tcb=(tcb *) malloc(sizeof(tcb));
+	struct tcb *my_tcb=(struct tcb *) malloc(sizeof(tcb));
 	//Thread status is decided by scheduler
 	my_tcb.tid=thread;
 	my_tcb.thread_context.uc_link=;//initializes ucontext_t
-	my_tcb.thread_context.uc_sigmask=;
+	my_tcb.thread_context.uc_sigmask=0;
 	my_tcb.thread_context.uc_stack.ss_sp=sizeof(thread_info);
 	my_tcb.thread_context.uc_stack.ss_flags=0;
 	my_tcb.thread_context.uc_stack.ss_size;
@@ -90,17 +85,21 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 	//attaches function to context
 	thread=tcb_num;
 	my_tcb.tid=thread;
+	tcbs[thread]=&my_tcb;
 	tcb_num++;
-	makecontext(&thread.thread_context,function,arg);
-	add(&thread);//adds TCB to priority queue
+	makecontext(&my_tcb.thread_context,function,arg);
+	enqueue(&my_tcb);//adds TCB to priority queue
 	
 	return 0;
 }
 
 /* give CPU pocession to other user level threads voluntarily */
 int my_pthread_yield() {
-	//gets current context from current tcb
-	swapcontext(tcbPtr.thread_context,tcbPtr.thread_context.);
+	dequeue((*tcbPtr)->thread_params->queue);//removes from its current queue
+	enqueue(*tcbPtr,6);//places current tcb in waiting queue
+	*tcbPtr=peek();//changes tcb pointer to new current tcb
+	//gets current context from current tcb and swaps
+	swapcontext(tcbPtr.thread_context,tcbPtr.thread_context.uclink);
 	return 0;
 }
 

@@ -38,8 +38,8 @@ int tcb_num=0;
 struct thread_info {
     void *(*run) (void *);//function
     void *arg;//arguments for function
-    unsigned int type;
     int joinable;
+    int queue;
     int readyTime;
     int execTime;
     int deadline;
@@ -48,7 +48,7 @@ struct thread_info {
 
 
 //Thread Control Block
-typedef struct threadControlBlock {
+typedef struct tcb {
 	/* add something here */
     my_pthread_t tid;
     my_pthread_t ptid;
@@ -61,7 +61,7 @@ typedef struct threadControlBlock {
     struct tcb *childThread;
     uint priority;//used by scheduler object
     uint magic_key;//used for debugging
-} tcb; 
+} ; 
 
 // MUTEX Struct Definition
 typedef struct my_pthread_mutex_t {
@@ -74,32 +74,39 @@ struct Node{
     struct Node * next;
 };
 
-
-struct Node Queue[4]; // all ready threads
-struct Node RunningQueue; //ready threads that we want to run in round robin
-struct Node WaitingQueue; // all waiting threads
-struct Node CompletedQueue; // free stack in ucontext and put tcb of completed thread in Completed Queue
-//struct tcb tcbs[1000]; // all the tcbs that you could have are intialized.
+struct Node Queue[7]; // all queues 5=running,6=waiting,7=completed
+struct tcb *tcbs[1000]; // all the tcbs that you could have are intialized.
+struct tcb* tsbPtr=&tcbs[1];
 //pointers to back of each queue
-struct Node* back0=&Queue[0];
-struct Node* back1=&Queue[1];
-struct Node* back2=&Queue[2];
-struct Node* back3=&Queue[3];
-struct Node* backR=&RunningQueue;//for running queue
-struct Node* backW=&WaitingQueue;//for waiting queue
-struct Node* backC=&CompletedQueue;//for complete queue
-
+struct Node* back[7];
+struct Node* back[0]=&Queue[0];
+struct Node* back[1]=&Queue[1];
+struct Node* back[2]=&Queue[2];
+struct Node* back[3]=&Queue[3];
+struct Node* back[4]=&Queue[4];//for running queue
+struct Node* back[5]=&Queue[5];//for waiting queue
+struct Node* back[6]=&Queue[6];//for complete queue
+//pointers to the front of each queue
+struct Node* front[7];
+struct Node* front[0]=&Queue[0];
+struct Node* front[1]=&Queue[1];
+struct Node* front[2]=&Queue[2];
+struct Node* front[3]=&Queue[3];
+struct Node* front[4]=&Queue[4];//for running queue
+struct Node* front[5]=&Queue[5];//for waiting queue
+struct Node* front[6]=&Queue[6];//for complete queue
 sigset_t sigProcMask;
 // Feel free to add your own auxiliary data structures
 
 struct itimerval it; 
 struct sigaction act, oact;
 
-//adds tcb to highest priority queue
-void enqueue(struct tcb* my_tcb);
-//search for specified thread
-void search(my_pthread_t thread);
-
+//adds tcb to queue
+bool enqueue(struct tcb* my_tcb,int a);
+//removes tcb to from queue
+bool dequeue(int a);
+//looks at next tcb in priority queue
+struct tcb* peek();
 /* Function Declarations: */
 /*spin-locks*/
 void spin_acquire(my_pthread_mutex_t *mutex);
