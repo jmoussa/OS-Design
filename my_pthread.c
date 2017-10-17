@@ -10,8 +10,8 @@
 #include <errno.h>
 
 my_pthread_mutex_t *LOCK;
-tcb * tsbPtr = tcbs[0];
-static tcb *current_thread, *main_thread;
+//tcb * tcbPtr = tcbs[0];
+tcb *current_thread, *main_thread;
 static int Count_time_executed_for_maintainance_cycle =0;
 
 void spin_aquire(my_pthread_mutex_t *mutex){
@@ -262,22 +262,26 @@ struct queue peek(){
     }
     return Queue[i];
 }
+void wrapperfunction(void *(*function)(void*),void * arg,void * retval){
+	retval=function(arg);
+	return;
+}
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
-    
     tcb* my_tcb= malloc(sizeof(tcb));
     //Thread status is decided by scheduler
     *thread=tcb_num;
     my_tcb->tid=*thread;
     tcbs[*thread]=my_tcb;
     tcb_num++;
+    getcontext(&my_tcb->thread_context);
     my_tcb->thread_context.uc_link=NULL;//initializes ucontext_t
     sigfillset(&my_tcb->thread_context.uc_sigmask);
-    my_tcb->thread_context.uc_stack.ss_sp=malloc(sizeof(struct thread_info));
+    my_tcb->thread_context.uc_stack.ss_sp=malloc(MEM);
     my_tcb->thread_context.uc_stack.ss_flags=0;
-    my_tcb->thread_context.uc_stack.ss_size=sizeof(struct thread_info);
+    my_tcb->thread_context.uc_stack.ss_size=MEM;
     //attaches function to context
-    makecontext(&my_tcb->thread_context,(void*)&function,1,arg);
+    makecontext(&my_tcb->thread_context,(void*)&wrapperfunction,3,function,arg,my_tcb->retval);
     //Thread status is decided by scheduler
     my_tcb->thread_params.run=function;
     my_tcb->thread_params.arg=arg;
@@ -291,27 +295,29 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 
 /* give CPU pocession to other user level threads voluntarily */
 int my_pthread_yield() {
-    tcbPtr->status=1;
-    my_dequeue(&Queue[tcbPtr->thread_params.queue]);//removes from its current queue
-    my_enqueue(&Queue[5],tcbPtr);//places current tcb in waiting queue
-    tcbPtr=peek().front;//changes tcb pointer to new current tcb
+	current_thread->status=1;
+    my_dequeue(&Queue[current_thread->thread_params.queue]);//removes from its current queue
+    my_enqueue(&Queue[5],current_thread);//places current tcb in waiting queue
+    current_thread=peek().front;//changes tcb pointer to new current tcb
     //gets current context from current tcb and swaps
-    swapcontext(&tcbPtr->thread_context,tcbPtr->thread_context.uc_link);
+    swapcontext(&current_thread->thread_context,current_thread->thread_context.uc_link);
     return 0;
 }
 
 /* terminate a thread */
 void my_pthread_exit(void *value_ptr) {
-    tcbPtr->status=2;//changes status to finished
-    my_dequeue(&Queue[tcbPtr->thread_params.queue]);
-    free(&tcbPtr->thread_context.uc_stack);//clears stack in thread's context
-    my_enqueue(&Queue[6],tcbPtr);//places finished thread in completed queue
-    tcbPtr=peek().front;
+	value_ptr=current_thread->retval;
+	current_thread->status=2;//changes status to finished
+    my_dequeue(&Queue[current_thread->thread_params.queue]);
+    free(&current_thread->thread_context.uc_stack);//clears stack in thread's context
+    my_enqueue(&Queue[6],current_thread);//places finished thread in completed queue
+    current_thread=peek().front;
 }
 
 /* wait for thread termination */
 int my_pthread_join(my_pthread_t thread, void **value_ptr) {
     tcb t=*tcbs[thread];
+    t.joinid=current_thread->tid;
     if(t.tid!=thread){
         return ESRCH;
     }
@@ -319,14 +325,14 @@ int my_pthread_join(my_pthread_t thread, void **value_ptr) {
         if(t.thread_params.joinable==0){
             return EINVAL;//not joinable
         }
-        **value_ptr=t.status;
-        else if(**value_ptr==PTHREAD_WAITING && == t.status==PTHREAD_WAITING ){
+
+        else if(t.joinid==t.tid || current_thread->joinid==t.tid){
             return EDEADLK;//1 means error EDEADLK
             //this means two threads joined with eachother or a thread joined with itself
         }
         my_pthread_yield();
     }
-    *value_ptr=t.
+    *value_ptr=t.retval;
     return 0;
 }
 /* initial the mutex lock */
@@ -338,7 +344,7 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
 
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
-    while(__sync_lock_test_and_set(mutex->lock, 1) != 0){ //shared mutex was locked
+    while(__sync_lock_test_and_set(&mutex->lock, 1) != 0){ //shared mutex was locked
         spin_aquire(LOCK);
         if(mutex->lock == 1){ //value of mutex->lock is
             my_pthread_yield();
@@ -355,7 +361,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
     spin_aquire(LOCK);
     //TODO: load next thread in the queue
-    __sync_lock_release(mutex);
+    __sync_lock_release(&mutex);
     spin_release(LOCK);
     //if nextThread!=null then wake up the next thread
     return 0;

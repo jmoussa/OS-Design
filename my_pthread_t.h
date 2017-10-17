@@ -69,6 +69,7 @@ typedef struct threadControlBlock {
     /* add something here */
     my_pthread_t tid;
     my_pthread_t ptid;
+    my_pthread_t joinid;
     void * retval;
     void ** join_retval;
     state status; // Created enum state ; would not need this. 0=joined 1=yielded 2=exited 3=running
@@ -97,7 +98,7 @@ struct queue Queue[7]; // all queues 5=running,6=waiting,7=completed
 
 
 tcb *tcbs[1000]; // all the tcbs that you could have are intialized.
-tcb *tcbPtr;
+tcb *current_thread;
 //pointers to back of each queue
 struct Node* back[7];
 
@@ -109,7 +110,8 @@ sigset_t sigProcMask;
 
 struct itimerval it;
 struct sigaction act, oact;
-
+//wrapper function
+void wrapperfunction(void *(*function)(void*),void * arg,void * retval);
 //next thread to run for the scheduler
 tcb * get_next_thread_to_run();
 //get current time
