@@ -227,97 +227,95 @@ tcb * my_dequeue(struct queue * my_queue){
 
 
 
-//add tcb to queue
-//int enqueue(struct tcb* my_tcb,int a){
-//    struct Node * end= malloc(sizeof(Node));
-//    end->head=my_tcb;
-//    end->next=NULL;
-//    if(*front[a]==NULL){
-//        *front[a]=end;
-//    }
-//    else{
-//        *back[a]->next=end;
-//    }
-//    *back[a]=end;
-//    my_tcb->thread_params.queue=a;
-//    return 1;
-//}
-//
-////removes tcb to from queue
-//tcb * dequeue(int a){
-//    
-//    struct Node * temp = front[a];
-//    *front[a] = front[a]->next;
-//    if(*front[a]==NULL)}{
-//        *end[a]=NULL;
-//    }
-//    tcb * tempTCB = temp->head;
-//    free(temp);
-//    return temp;
-//}
+int enqueue(struct tcb my_tcb,int a){
+    struct Node *end= malloc(sizeof(struct Node));
+    end->head=my_tcb;
+    end->next=NULL;
+    if(front[a]==NULL){
+        front[a]=end;
+    }
+    else{
+        back[a]->next=end;
+    }
+    back[a]=end;
+    my_tcb.thread_params.queue=a;
+    return 1;
+}
+
+//removes tcb to from queue
+int dequeue(int a){
+    struct Node temp=*front[a];
+    front[a]=front[a]->next;
+    if(front[a]==NULL){
+        back[a]=NULL;
+    }
+    free(&temp);
+    return 1;
+}
 
 //looks at next value in queue
-struct Node * peek(){
+struct Node* peek(){
     int i=0;
-    while(*front[i]==NULL){
+    while(front[i]==NULL){
         i++;
     }
-    return *front[i];
+    return front[i];
 }
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
     
-    struct tcb *my_tcb=(struct tcb *) malloc(sizeof(tcb));
+    struct tcb* my_tcb= malloc(sizeof(struct tcb));
     //Thread status is decided by scheduler
-    my_tcb.tid=thread;
-    my_tcb.thread_context.uc_link=;//initializes ucontext_t
-    sigfillset(my_tcb.thread_context.uc_sigmask);
-    my_tcb.thread_context.uc_stack.ss_sp=sizeof(thread_info);
-    my_tcb.thread_context.uc_stack.ss_flags=0;
-    my_tcb.thread_context.uc_stack.ss_size;
-    my_tcb.stack=&thread;//initializes other parameters
-    my_tcb.thread_params.run=function;
-    my_tcb.thread_params.arg=arg;
-    my_tcb.thread_params.joinable= true ;
-    //attaches function to context
-    thread=tcb_num;
-    my_tcb.tid=thread;
-    tcbs[thread]=&my_tcb;
+    *thread=tcb_num;
+    my_tcb->tid=*thread;
+    tcbs[*thread]=*my_tcb;
     tcb_num++;
-    makecontext(&my_tcb.thread_context,function,arg);
-    enqueue(&my_tcb);//adds TCB to priority queue
+    my_tcb->thread_context.uc_link=NULL;//initializes ucontext_t
+    sigfillset(&my_tcb->thread_context.uc_sigmask);
+    my_tcb->thread_context.uc_stack.ss_sp=malloc(sizeof(struct thread_info));
+    my_tcb->thread_context.uc_stack.ss_flags=0;
+    my_tcb->thread_context.uc_stack.ss_size=sizeof(struct thread_info);
+    //attaches function to context
+    makecontext(&my_tcb->thread_context,(void*)&function,1,arg);
+    //Thread status is decided by scheduler
+    my_tcb->thread_params.run=function;
+    my_tcb->thread_params.arg=arg;
+    my_tcb->thread_params.joinable= 1 ;
+    
+    
+    enqueue(*my_tcb,0);//adds TCB to priority queue
     
     return 0;
 }
 
 /* give CPU pocession to other user level threads voluntarily */
 int my_pthread_yield() {
-    *tcbPtr->status=1;
-    dequeue((*tcbPtr)->thread_params->queue);//removes from its current queue
+    tcbPtr->status=1;
+    dequeue(tcbPtr->thread_params.queue);//removes from its current queue
     enqueue(*tcbPtr,5);//places current tcb in waiting queue
-    *tcbPtr=peek();//changes tcb pointer to new current tcb
+    *tcbPtr=peek()->head;//changes tcb pointer to new current tcb
     //gets current context from current tcb and swaps
-    swapcontext(tcbPtr.thread_context,tcbPtr.thread_context.uclink);
+    swapcontext(&tcbPtr->thread_context,tcbPtr->thread_context.uc_link);
     return 0;
 }
 
 /* terminate a thread */
 void my_pthread_exit(void *value_ptr) {
-    *tcbPtr->status=2;//changes status to finished
-    dequeue(*tcbPtr->thread_params->queue);
-    free(*tcbPtr->ucontext_t->uc_stack);//clears stack in thread's context
+    tcbPtr->status=2;//changes status to finished
+    dequeue(tcbPtr->thread_params.queue);
+    free(&tcbPtr->thread_context.uc_stack);//clears stack in thread's context
     enqueue(*tcbPtr,6);//places finished thread in completed queue
     *tcbPtr=peek()->head;
 }
 
 /* wait for thread termination */
 int my_pthread_join(my_pthread_t thread, void **value_ptr) {
-    struct tcb t;
-    while(**value_ptr!=PTHREAD_EXITED){
-        if(search(thread,&t)==1){
-            return ESRCH;
-        }
-        else if(!t.thread_params.joinable){
+    struct tcb t=tcbs[thread];
+    if(t.tid!=thread){
+        return ESRCH;
+    }
+    while(t.status!=2){
+        if(t.thread_params.joinable==0){
             return EINVAL;//not joinable
         }
         **value_ptr=t.status;
@@ -327,9 +325,9 @@ int my_pthread_join(my_pthread_t thread, void **value_ptr) {
         }
         my_pthread_yield();
     }
+    *value_ptr=t.
     return 0;
 }
-
 /* initial the mutex lock */
 int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
     mutex->lock = 0;
