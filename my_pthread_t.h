@@ -51,9 +51,9 @@ typedef struct tcb {
 	/* add something here */
     my_pthread_t tid;
     my_pthread_t ptid;
-    void * retval;
+    void * result;
     void ** join_retval;
-    uint status;//0=joined 1=yielded 2=exited 3=running
+    int status;//0=joined 1=yielded 2=exited 3=running
     ucontext_t thread_context;//stores the context of the thread
     struct thread_info thread_params;//thread info
     uint executedTime;//tells how long program has been running
@@ -73,27 +73,13 @@ struct Node{
     struct Node * next;
 };
 
-struct Node Queue[7]; // all queues 5=running,6=waiting,7=completed
-struct tcb *tcbs[1000]; // all the tcbs that you could have are intialized.
-struct tcb* tsbPtr=tcbs[0];
+struct Node Queue[7]; // all queues 4=running,5=waiting,6=completed
+struct tcb tcbs[1000]; // all the tcbs that you could have are intialized.
+struct tcb *tcbPtr;
 //pointers to back of each queue
 struct Node* back[7];
-struct Node* back[0]=&Queue[0];
-struct Node* back[1]=&Queue[1];
-struct Node* back[2]=&Queue[2];
-struct Node* back[3]=&Queue[3];
-struct Node* back[4]=&Queue[4];//for running queue
-struct Node* back[5]=&Queue[5];//for waiting queue
-struct Node* back[6]=&Queue[6];//for complete queue
 //pointers to the front of each queue
 struct Node* front[7];
-struct Node* front[0]=&Queue[0];
-struct Node* front[1]=&Queue[1];
-struct Node* front[2]=&Queue[2];
-struct Node* front[3]=&Queue[3];
-struct Node* front[4]=&Queue[4];//for running queue
-struct Node* front[5]=&Queue[5];//for waiting queue
-struct Node* front[6]=&Queue[6];//for complete queue
 sigset_t sigProcMask;
 // Feel free to add your own auxiliary data structures
 
@@ -101,9 +87,9 @@ struct itimerval it;
 struct sigaction act, oact;
 
 //adds tcb to queue
-bool enqueue(struct tcb* my_tcb,int a);
+int enqueue(struct tcb my_tcb,int a);
 //removes tcb to from queue
-bool dequeue(int a);
+int dequeue(int a);
 //looks at next tcb in priority queue
 struct Node* peek();
 /* Function Declarations: */
