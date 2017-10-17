@@ -97,7 +97,7 @@ struct queue Queue[7]; // all queues 5=running,6=waiting,7=completed
 
 
 tcb *tcbs[1000]; // all the tcbs that you could have are intialized.
-
+tcb *tcbPtr;
 //pointers to back of each queue
 struct Node* back[7];
 
@@ -121,7 +121,7 @@ int my_enqueue(struct queue * my_queue, tcb * my_tcb);
 //int dequeue(int a);
 tcb * my_dequeue(struct queue * my_queue);
 //looks at next tcb in priority queue
-struct Node* peek();
+struct queue peek();
 /* Function Declarations: */
 /*spin-locks*/
 void spin_acquire(my_pthread_mutex_t *mutex);

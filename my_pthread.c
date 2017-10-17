@@ -226,7 +226,7 @@ tcb * my_dequeue(struct queue * my_queue){
 }
 
 
-
+/*
 int enqueue(struct tcb my_tcb,int a){
     struct Node *end= malloc(sizeof(struct Node));
     end->head=my_tcb;
@@ -241,8 +241,9 @@ int enqueue(struct tcb my_tcb,int a){
     my_tcb.thread_params.queue=a;
     return 1;
 }
-
+*/
 //removes tcb to from queue
+/*
 int dequeue(int a){
     struct Node temp=*front[a];
     front[a]=front[a]->next;
@@ -252,23 +253,23 @@ int dequeue(int a){
     free(&temp);
     return 1;
 }
-
+*/
 //looks at next value in queue
-struct Node* peek(){
+struct queue peek(){
     int i=0;
-    while(front[i]==NULL){
+    while(Queue[i].counter==0){
         i++;
     }
-    return front[i];
+    return Queue[i];
 }
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
     
-    struct tcb* my_tcb= malloc(sizeof(struct tcb));
+    tcb* my_tcb= malloc(sizeof(tcb));
     //Thread status is decided by scheduler
     *thread=tcb_num;
     my_tcb->tid=*thread;
-    tcbs[*thread]=*my_tcb;
+    tcbs[*thread]=my_tcb;
     tcb_num++;
     my_tcb->thread_context.uc_link=NULL;//initializes ucontext_t
     sigfillset(&my_tcb->thread_context.uc_sigmask);
@@ -283,7 +284,7 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
     my_tcb->thread_params.joinable= 1 ;
     
     
-    enqueue(*my_tcb,0);//adds TCB to priority queue
+    my_enqueue(&Queue[0],my_tcb);//adds TCB to priority queue
     
     return 0;
 }
@@ -291,9 +292,9 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 /* give CPU pocession to other user level threads voluntarily */
 int my_pthread_yield() {
     tcbPtr->status=1;
-    dequeue(tcbPtr->thread_params.queue);//removes from its current queue
-    enqueue(*tcbPtr,5);//places current tcb in waiting queue
-    *tcbPtr=peek()->head;//changes tcb pointer to new current tcb
+    my_dequeue(&Queue[tcbPtr->thread_params.queue]);//removes from its current queue
+    my_enqueue(&Queue[5],tcbPtr);//places current tcb in waiting queue
+    tcbPtr=peek().front;//changes tcb pointer to new current tcb
     //gets current context from current tcb and swaps
     swapcontext(&tcbPtr->thread_context,tcbPtr->thread_context.uc_link);
     return 0;
@@ -302,15 +303,15 @@ int my_pthread_yield() {
 /* terminate a thread */
 void my_pthread_exit(void *value_ptr) {
     tcbPtr->status=2;//changes status to finished
-    dequeue(tcbPtr->thread_params.queue);
+    my_dequeue(&Queue[tcbPtr->thread_params.queue]);
     free(&tcbPtr->thread_context.uc_stack);//clears stack in thread's context
-    enqueue(*tcbPtr,6);//places finished thread in completed queue
-    *tcbPtr=peek()->head;
+    my_enqueue(&Queue[6],tcbPtr);//places finished thread in completed queue
+    tcbPtr=peek().front;
 }
 
 /* wait for thread termination */
 int my_pthread_join(my_pthread_t thread, void **value_ptr) {
-    struct tcb t=tcbs[thread];
+    tcb t=*tcbs[thread];
     if(t.tid!=thread){
         return ESRCH;
     }
