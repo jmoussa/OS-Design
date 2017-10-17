@@ -64,8 +64,12 @@ bool dequeue(int a){
 }
 
 //looks at next value in queue
-struct tcb* peek(){
-	return *front[0];
+struct Node* peek(){
+  int i=0;
+  while(*front[i]==NULL){
+    i++;
+  }
+  return *front[i];
 }
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
@@ -95,8 +99,9 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 
 /* give CPU pocession to other user level threads voluntarily */
 int my_pthread_yield() {
+  *tcbPtr->status=1;
 	dequeue((*tcbPtr)->thread_params->queue);//removes from its current queue
-	enqueue(*tcbPtr,6);//places current tcb in waiting queue
+	enqueue(*tcbPtr,5);//places current tcb in waiting queue
 	*tcbPtr=peek();//changes tcb pointer to new current tcb
 	//gets current context from current tcb and swaps
 	swapcontext(tcbPtr.thread_context,tcbPtr.thread_context.uclink);
@@ -105,9 +110,11 @@ int my_pthread_yield() {
 
 /* terminate a thread */
 void my_pthread_exit(void *value_ptr) {
-	//removes thread from queue
-	dequeue();
-	free(value_ptr);//removes stack in uncontext
+  *tcbPtr->status=2;//changes status to finished
+  dequeue(*tcbPtr->thread_params->queue);
+  free(*tcbPtr->ucontext_t->uc_stack);//clears stack in thread's context
+  enqueue(*tcbPtr,6);//places finished thread in completed queue
+  *tcbPtr=peek()->head;
 }
 
 /* wait for thread termination */
@@ -144,7 +151,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
         if(mutex->lock == 1){ //value of mutex->lock is 
             my_pthread_yield();
             spin_release(LOCK);
-            return 1; //thread is in waiting queue and blocked
+            //thread is in waiting queue and blocked
         }else{
             spin_release(LOCK);
         }

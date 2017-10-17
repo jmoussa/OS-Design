@@ -78,7 +78,7 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 	//Thread status is decided by scheduler
 	my_tcb.tid=thread;
 	my_tcb.thread_context.uc_link=;//initializes ucontext_t
-	my_tcb.thread_context.uc_sigmask=0;
+	sigfillset(my_tcb.thread_context.uc_sigmask);
 	my_tcb.thread_context.uc_stack.ss_sp=sizeof(thread_info);
 	my_tcb.thread_context.uc_stack.ss_flags=0;
 	my_tcb.thread_context.uc_stack.ss_size;
