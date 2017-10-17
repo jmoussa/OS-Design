@@ -61,22 +61,24 @@ void scheduler(int sig){
         if (temp->status == WAITING)
         {
             //pass
-            current_thread = scheduler_get_next_thread();
+            current_thread = get_next_thread_to_run();
             if (current_thread != NULL)
                 current_thread->status = RUNNING;
         }
         else if (temp->status == EXITED)
         {
             //pass
-            current_thread = scheduler_get_next_thread();
+            current_thread = get_next_thread_to_run();
             if (current_thread != NULL)
                 current_thread->status = RUNNING;
         }
         else if (temp->status == YIELDED)
         {
             //put the thread back into the original queue
-            scheduler_add_thread(temp, temp->priority);
-            current_thread = scheduler_get_next_thread();
+            int add = 0;
+            add = my_enqueue(&Queue[temp->priority], temp);
+            if (add != 1) {perror("thread control block cannot be enqueued");}
+            current_thread = get_next_thread_to_run();
             if (current_thread != NULL)
                 current_thread->status = RUNNING;
         }
@@ -87,16 +89,20 @@ void scheduler(int sig){
                 new_priority = current_priority + 1;
             else //Priority cannot exceed anymore
                 new_priority = current_priority;
-            scheduler_add_thread(temp, new_priority);
+            //scheduler_add_thread(temp, new_priority);
             
-            current_thread = scheduler_get_next_thread();
+            int add = 0;
+            add = my_enqueue(&Queue[new_priority], temp);
+            if (add != 1) {perror("thread control block cannot be enqueued");}
+            
+            current_thread = get_next_thread_to_run();
             if (current_thread != NULL)
                 current_thread->status = RUNNING;
         }
     }
     else //control is here because current thread is NULL
     {
-        current_thread = scheduler_get_next_thread();
+        current_thread = get_next_thread_to_run();
         if (current_thread != NULL)
         {
             current_thread->status = RUNNING;
