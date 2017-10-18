@@ -24,7 +24,7 @@ void *mythread(void *arg){
 }
 */
 int main(){
-	my_pthread_t p;
+	pthread_t p;
 	int rc;
 	
 	myarg_t args;

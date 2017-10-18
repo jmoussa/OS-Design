@@ -9,10 +9,15 @@
 #include "my_pthread_t.h"
 #include <errno.h>
 
+int start = 1;
+
 my_pthread_mutex_t *LOCK;
+int maintainence_cycle_counter = 0;
+int tcb_num = 0;
+
 //tcb * tcbPtr = tcbs[0];
 tcb *current_thread, *main_thread;
-static int Count_time_executed_for_maintainance_cycle =0;
+static int Count_time_executed_for_maintainance_cycle = 0;
 
 void spin_aquire(my_pthread_mutex_t *mutex){
     my_pthread_mutex_init(mutex, NULL);
@@ -29,16 +34,16 @@ void spin_release(my_pthread_mutex_t *mutex){
     mutex->lock = 0;
 }
 
-void init(){
-    int i = 0;
-    for(i = 0; i < 7 ; i++){
-        back[i] = &Queue[i];
-        front[i] = &Queue[i];
-    }
-}
+//void init(){
+//    int i = 0;
+//    for(i = 0; i < 7 ; i++){
+//        back[i] = &Queue[i];
+//        front[i] = &Queue[i];
+//    }
+//}
 
 
-void scheduler(int sig){
+void scheduler(){
     struct itimerval my_timer;
     ucontext_t uc_temp; //To store the context of the main thread
     
@@ -58,7 +63,12 @@ void scheduler(int sig){
         temp->executedTime += temp->thread_params.execTime;
         
         Count_time_executed_for_maintainance_cycle += (current_priority +1)*QUANTUM;
-        if (temp->status == WAITING)
+        if (temp->status == WAITING)//int my_pthread_init(){
+        	//    sigemptyset(&sigProcMask);
+        	//    sigaddset(&sigProcMask, SIGPROF);
+        	//    return 0;
+        	//}
+
         {
             //pass
             current_thread = get_next_thread_to_run();
@@ -112,7 +122,7 @@ void scheduler(int sig){
     //Update MLFQ on the basis of starvation
     if (Count_time_executed_for_maintainance_cycle > MAINTAINENCE_CYCLE_THRESHOLD * QUANTUM)
     {
-        Count_time_executed_for_maintainance_cycle = 0;
+        Count_time_executed_for_maintainance_cycle = 0; // did i increment  this var?
         int i;
         for(i = 1; i < LEVELS; i++)
         {
@@ -149,6 +159,7 @@ void scheduler(int sig){
     {
         current_thread->thread_params.readyTime = get_current_time();
         current_thread->thread_params.deadline = current_thread->thread_params.readyTime + my_timer.it_value.tv_usec;
+        setitimer(ITIMER_REAL, &my_timer, NULL);
         if (temp != NULL)
             swapcontext(&(temp->thread_context), &(current_thread->thread_context));
         else
@@ -156,7 +167,7 @@ void scheduler(int sig){
          stores main context
          (enters else statement only in first call to scheduler)
          */
-            swapcontext(&uc_temp, &(current_thread->thread_context));
+            swapcontext(&main_thread->thread_context,&current_thread->thread_context);
     }
     //return;
 
@@ -182,10 +193,11 @@ long int get_current_time(){
 }
 
 
-int my_pthread_init(){
-    sigemptyset(&sigProcMask);
-    sigaddset(&sigProcMask, SIGPROF);
-}
+//int my_pthread_init(){
+//    sigemptyset(&sigProcMask);
+//    sigaddset(&sigProcMask, SIGPROF);
+//    return 0;
+//}
 
 
 void queue_init(struct queue * my_queue){
@@ -266,30 +278,48 @@ void wrapperfunction(void *(*function)(void*),void * arg,void * retval){
 	retval=function(arg);
 	return;
 }
+
+void my_pthread_init(){
+	sigemptyset(&sigProcMask);
+	sigaddset(&sigProcMask, SIGALRM);
+	main_thread = malloc(sizeof(tcb));
+	main_thread->tid = tcb_num++;
+	main_thread->priority = 0;
+	my_enqueue(&Queue[0],main_thread);
+	//scheduler();
+}
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
+	signal(SIGALRM, scheduler);
+
+	sigprocmask(SIG_BLOCK, &sigProcMask, NULL);
     tcb* my_tcb= malloc(sizeof(tcb));
     //Thread status is decided by scheduler
-    *thread=tcb_num;
-    my_tcb->tid=*thread;
+    *thread = tcb_num;
+    my_tcb->tid = *thread;
     tcbs[*thread]=my_tcb;
     tcb_num++;
     getcontext(&my_tcb->thread_context);
     my_tcb->thread_context.uc_link=NULL;//initializes ucontext_t
-    sigfillset(&my_tcb->thread_context.uc_sigmask);
-    my_tcb->thread_context.uc_stack.ss_sp=malloc(MEM);
-    my_tcb->thread_context.uc_stack.ss_flags=0;
-    my_tcb->thread_context.uc_stack.ss_size=MEM;
+    my_tcb->priority = 0;
+    //sigfillset(&my_tcb->thread_context.uc_sigmask);
+    my_tcb->thread_context.uc_stack.ss_sp = malloc(MEM);
+    my_tcb->thread_context.uc_stack.ss_flags = 0;
+    my_tcb->thread_context.uc_stack.ss_size = MEM;
     //attaches function to context
     makecontext(&my_tcb->thread_context,(void*)&wrapperfunction,3,function,arg,my_tcb->retval);
     //Thread status is decided by scheduler
     my_tcb->thread_params.run=function;
     my_tcb->thread_params.arg=arg;
-    my_tcb->thread_params.joinable= 1 ;
-    
+    my_tcb->thread_params.joinable = 1;
     
     my_enqueue(&Queue[0],my_tcb);//adds TCB to priority queue
-    
+    if(start == 1){
+    		start = 0;
+    		my_pthread_init();
+    }
+    sigprocmask(SIG_UNBLOCK, &sigProcMask, NULL);
+    scheduler();
     return 0;
 }
 
@@ -307,7 +337,7 @@ int my_pthread_yield() {
 /* terminate a thread */
 void my_pthread_exit(void *value_ptr) {
 	value_ptr=current_thread->retval;
-	current_thread->status=2;//changes status to finished
+	current_thread->status=YIELDED;//changes status to finished
     my_dequeue(&Queue[current_thread->thread_params.queue]);
     free(&current_thread->thread_context.uc_stack);//clears stack in thread's context
     my_enqueue(&Queue[6],current_thread);//places finished thread in completed queue
@@ -316,23 +346,23 @@ void my_pthread_exit(void *value_ptr) {
 
 /* wait for thread termination */
 int my_pthread_join(my_pthread_t thread, void **value_ptr) {
-    tcb t=*tcbs[thread];
-    t.joinid=current_thread->tid;
-    if(t.tid!=thread){
+    tcb * t=tcbs[thread];
+    t->joinid=current_thread->tid;
+    if(t->tid!=thread){
         return ESRCH;
     }
-    while(t.status!=2){
-        if(t.thread_params.joinable==0){
+    while(t->status!=EXITED){
+        if(t->thread_params.joinable==0){
             return EINVAL;//not joinable
         }
 
-        else if(t.joinid==t.tid || current_thread->joinid==t.tid){
+        else if(t->joinid==t->tid || current_thread->joinid==t->tid){
             return EDEADLK;//1 means error EDEADLK
             //this means two threads joined with eachother or a thread joined with itself
         }
         my_pthread_yield();
     }
-    *value_ptr=t.retval;
+    *value_ptr=t->retval;
     return 0;
 }
 /* initial the mutex lock */

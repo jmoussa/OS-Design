@@ -9,16 +9,7 @@
 #define MY_PTHREAD_T_H
 
 #define _GNU_SOURCE
-//macro my_ to pthread functions
-#define pthread_create(a, b, c, d) my_pthread_create(a, b, c, d)
-#define pthread_yield() my_pthread_yield()
-#define pthread_join(a, b) my_pthread_join(a, b)
-#define my_pthread_exit(x) my_my_pthread_exit(x)
-//macro my_ to mutex functions
-#define pthread_mutex_init(a, b)  my_pthread_mutex_init(a, b)
-#define pthread_mutex_lock(a) my_pthread_mutex_lock(a)
-#define pthread_mutex_unlock(a) my_pthread_mutex_unlock(a)
-#define pthread_mutex_destroy(a)	my_pthread_mutex_destroy(a)
+#define USE_MY_PTHREAD
 /* include lib header files that you need here: */
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -39,7 +30,7 @@
 //Check for starvation every 50 quanta
 #define MAINTAINENCE_CYCLE_THRESHOLD 50
 
-int maintainence_cycle_counter = 0;
+
 
 //Thread states
 typedef enum state
@@ -49,7 +40,7 @@ typedef enum state
 
 
 typedef uint my_pthread_t;
-int tcb_num=0;
+
 
 //Thread info to be passed in TCB struct
 struct thread_info {
@@ -125,6 +116,7 @@ tcb * my_dequeue(struct queue * my_queue);
 //looks at next tcb in priority queue
 struct queue peek();
 /* Function Declarations: */
+void scheduler();
 /*spin-locks*/
 void spin_acquire(my_pthread_mutex_t *mutex);
 void spin_release(my_pthread_mutex_t * mutex);
@@ -152,5 +144,18 @@ int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex);
 
 /* destroy the mutex */
 int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex);
+
+#ifdef USE_MY_PTHREAD
+#define pthread_create my_pthread_create
+#define pthread_yield my_pthread_yield
+#define pthread_join my_pthread_join
+#define my_pthread_exit my_my_pthread_exit
+//macro my_ to mutex functions
+#define pthread_mutex_init my_pthread_mutex_init
+#define pthread_mutex_lock my_pthread_mutex_lock
+#define pthread_mutex_unlock my_pthread_mutex_unlock
+#define pthread_mutex_destroy	my_pthread_mutex_destroy
+
+#endif
 
 #endif
