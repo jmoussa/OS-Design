@@ -11,7 +11,7 @@
 
 int start = 1;
 
-my_pthread_mutex_t *LOCK;
+const my_pthread_mutex_t *LOCK = {0};
 int maintainence_cycle_counter = 0;
 int tcb_num = 0;
 
@@ -325,12 +325,16 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 
 /* give CPU pocession to other user level threads voluntarily */
 int my_pthread_yield() {
-	current_thread->status=1;
+	current_thread->status=YIELDED;
+	printf("----STATUS: YILEDED\n");
     my_dequeue(&Queue[current_thread->thread_params.queue]);//removes from its current queue
     my_enqueue(&Queue[5],current_thread);//places current tcb in waiting queue
-    current_thread=peek().front;//changes tcb pointer to new current tcb
-    //gets current context from current tcb and swaps
+    current_thread->status=WAITING;
+	printf("----STATUS: WAITING\n");
+	//gets current context from current tcb and swaps
     swapcontext(&current_thread->thread_context,current_thread->thread_context.uc_link);
+    
+	current_thread=peek().front;//changes tcb pointer to new current tcb
     return 0;
 }
 
@@ -348,55 +352,66 @@ void my_pthread_exit(void *value_ptr) {
 int my_pthread_join(my_pthread_t thread, void **value_ptr) {
     tcb * t=tcbs[thread];
     t->joinid=current_thread->tid;
-    if(t->tid!=thread){
-        return ESRCH;
+	printf("Waiter tid: %d\n", current_thread->tid);
+	printf("Waitee tid: %d\n",  t->tid);
+    if(t->tid==current_thread->tid){
+        printf("Same Thread! DON'T JOIN\n");
+		return ESRCH;//same thread
     }
     while(t->status!=EXITED){
         if(t->thread_params.joinable==0){
-            return EINVAL;//not joinable
+            printf("NOT JOINABLE\n");
+			return EINVAL;//not joinable
         }
 
         else if(t->joinid==t->tid || current_thread->joinid==t->tid){
-            return EDEADLK;//1 means error EDEADLK
+            printf("DEADLOCK\n");
+			return EDEADLK;//1 means error EDEADLK
             //this means two threads joined with eachother or a thread joined with itself
         }
+		printf("YIELDING\n");
         my_pthread_yield();
     }
+
     *value_ptr=t->retval;
-    return 0;
+    my_pthread_exit(*value_ptr);
+	return 0;
 }
 /* initial the mutex lock */
 int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
     mutex->lock = 0;
     mutex->flags = 0;
-    return 0;
+    printf("MUTEX INITIALIZED\n");
+	return 0;
 }
 
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
-    if(my_pthread_mutex_init(mutex, NULL)!=0){
-    	printf("Mutex Not initialized!");
-    	return 1;
-    }
 	while(__sync_lock_test_and_set(&mutex->lock, 1)){ //shared mutex was locked
-        spin_acquire(LOCK);
-        if(mutex->lock == 1){ //value of mutex->lock is
-            my_pthread_yield();
-            spin_release(LOCK);
+//        spin_acquire(LOCK);
+//        if(mutex->lock == 1){ //value of mutex->lock is
+           
+			printf("--MUTEX Locked, calling yield\n");
+			my_pthread_yield();
+//            spin_release(LOCK);
             //thread is in waiting queue and blocked
-        }else{
-            spin_release(LOCK);
-        }
+//        }else{
+//            spin_release(LOCK);
+//        }
     }
+	printf("--MUTEX GOT THE LOCK\n");
     return 0; //got the lock
 }
 
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
-    spin_acquire(LOCK);
+//    spin_acquire(LOCK);
     __sync_lock_release(&mutex->lock);
-    spin_release(LOCK);
-    current_thread->status = WAITING; 
+//    spin_release(LOCK);
+	printf("--MUTEX Unlocked, calling yield\n");
+	my_pthread_yield();
+		
+//	current_thread->status = WAITING; 
     return 0;
 }
 
