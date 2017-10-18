@@ -272,8 +272,8 @@ struct queue peek(){
     while(Queue[i].counter==0){
         i++;
     }
-    return Queue[i];
-}
+	return Queue[i];
+}	
 void wrapperfunction(void *(*function)(void*),void * arg,void * retval){
 	retval=function(arg);
 	return;
@@ -331,17 +331,18 @@ int my_pthread_yield() {
     my_enqueue(&Queue[5],current_thread);//places current tcb in waiting queue
     current_thread->status=WAITING;
 	printf("----STATUS: WAITING\n");
-	//gets current context from current tcb and swaps
-    swapcontext(&current_thread->thread_context,current_thread->thread_context.uc_link);
-    
+	
 	current_thread=peek().front;//changes tcb pointer to new current tcb
-    return 0;
+	
+	swapcontext(&current_thread->thread_context,current_thread->thread_context.uc_link);
+	return 0;
+
 }
 
 /* terminate a thread */
 void my_pthread_exit(void *value_ptr) {
 	value_ptr=current_thread->retval;
-	current_thread->status=YIELDED;//changes status to finished
+	current_thread->status=EXITED;//changes status to finished
     my_dequeue(&Queue[current_thread->thread_params.queue]);
     free(&current_thread->thread_context.uc_stack);//clears stack in thread's context
     my_enqueue(&Queue[6],current_thread);//places finished thread in completed queue
@@ -357,22 +358,22 @@ int my_pthread_join(my_pthread_t thread, void **value_ptr) {
     if(t->tid==current_thread->tid){
         printf("Same Thread! DON'T JOIN\n");
 		return ESRCH;//same thread
-    }
+    }else if(t->joinid==t->tid || current_thread->joinid==t->tid){
+        printf("DEADLOCK\n");
+		return EDEADLK;//1 means error EDEADLK
+        //this means two threads joined with eachother or a thread joined with itself
+    } 
     while(t->status!=EXITED){
         if(t->thread_params.joinable==0){
             printf("NOT JOINABLE\n");
 			return EINVAL;//not joinable
         }
-
-        else if(t->joinid==t->tid || current_thread->joinid==t->tid){
-            printf("DEADLOCK\n");
-			return EDEADLK;//1 means error EDEADLK
-            //this means two threads joined with eachother or a thread joined with itself
-        }
 		printf("YIELDING\n");
-        my_pthread_yield();
+		if(my_pthread_yield()==0){
+			break;
+		}
     }
-
+	printf("THREAD FINISHED YIELD, NOW EXITING");
     *value_ptr=t->retval;
     my_pthread_exit(*value_ptr);
 	return 0;
