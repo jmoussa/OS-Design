@@ -14,10 +14,9 @@
 #define C_SIZE 100000
 #define R_SIZE 1000
 
-pthread_mutex_t   mutex;
 
 int thread_num;
-
+pthread_mutex_t mutex;
 int* counter;
 pthread_t *thread;
 

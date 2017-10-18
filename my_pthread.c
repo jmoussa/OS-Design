@@ -19,7 +19,7 @@ int tcb_num = 0;
 tcb *current_thread, *main_thread;
 static int Count_time_executed_for_maintainance_cycle = 0;
 
-void spin_aquire(my_pthread_mutex_t *mutex){
+void spin_acquire(my_pthread_mutex_t *mutex){
     my_pthread_mutex_init(mutex, NULL);
     while(1){
         while(mutex->lock==1);
@@ -45,7 +45,7 @@ void spin_release(my_pthread_mutex_t *mutex){
 
 void scheduler(){
     struct itimerval my_timer;
-    ucontext_t uc_temp; //To store the context of the main thread
+    //ucontext_t uc_temp; //To store the context of the main thread
     
     //clear the timer
     my_timer.it_value.tv_sec = 0;
@@ -374,8 +374,12 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
 
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
-    while(__sync_lock_test_and_set(&mutex->lock, 1) != 0){ //shared mutex was locked
-        spin_aquire(LOCK);
+    if(my_pthread_mutex_init(mutex, NULL)!=0){
+    	printf("Mutex Not initialized!");
+    	return 1;
+    }
+	while(__sync_lock_test_and_set(&mutex->lock, 1)){ //shared mutex was locked
+        spin_acquire(LOCK);
         if(mutex->lock == 1){ //value of mutex->lock is
             my_pthread_yield();
             spin_release(LOCK);
@@ -389,8 +393,8 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
-    spin_aquire(LOCK);
-    __sync_lock_release(&mutex);
+    spin_acquire(LOCK);
+    __sync_lock_release(&mutex->lock);
     spin_release(LOCK);
     current_thread->status = WAITING; 
     return 0;

@@ -9,7 +9,16 @@
 #define MY_PTHREAD_T_H
 
 #define _GNU_SOURCE
-#define USE_MY_PTHREAD
+//#define USE_MY_PTHREAD 1
+#define pthread_create(a,b,c,d) my_pthread_create(a,b,c,d)
+#define pthread_yield() my_pthread_yield()
+#define pthread_join(a,b) my_pthread_join(a,b)
+#define my_pthread_exit(a) my_my_pthread_exit(a)
+#define pthread_mutex_init(a,b) my_pthread_mutex_init(a,b)
+#define pthread_mutex_lock(a) my_pthread_mutex_lock(a)
+#define pthread_mutex_unlock(a) my_pthread_mutex_unlock(a)
+#define pthread_mutex_destroy(a)	my_pthread_mutex_destroy(a)
+
 /* include lib header files that you need here: */
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -20,7 +29,6 @@
 #include <sys/time.h>
 #include <ucontext.h>
 #include <errno.h>
-
 
 //StackSize of each thread : 16 Kilobytes
 #define MEM 16384
@@ -39,7 +47,7 @@ typedef enum state
 } state;
 
 
-typedef uint my_pthread_t;
+typedef int my_pthread_t; //UINT
 
 
 //Thread info to be passed in TCB struct
@@ -66,10 +74,10 @@ typedef struct threadControlBlock {
     state status; // Created enum state ; would not need this. 0=joined 1=yielded 2=exited 3=running
     ucontext_t thread_context;//stores the context of the thread
     struct thread_info thread_params;//thread info
-    uint executedTime;//tells how long program has been running
+    int executedTime;//tells how long program has been running	UINT
     struct threadControlBlock * nextThread;
-    uint priority;//used by scheduler object
-    uint magic_key;//used for debugging
+    int priority;//used by scheduler object UINT
+    int magic_key;//used for debugging		UINT
 }tcb;
 
 // MUTEX Struct Definition
@@ -115,6 +123,7 @@ tcb * my_dequeue(struct queue * my_queue);
 struct queue peek();
 /* Function Declarations: */
 void scheduler();
+
 /*spin-locks*/
 void spin_acquire(my_pthread_mutex_t *mutex);
 void spin_release(my_pthread_mutex_t * mutex);
@@ -142,18 +151,21 @@ int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex);
 
 /* destroy the mutex */
 int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex);
-
+/*
 #ifdef USE_MY_PTHREAD
-#define pthread_create my_pthread_create
-#define pthread_yield my_pthread_yield
-#define pthread_join my_pthread_join
-#define my_pthread_exit my_my_pthread_exit
-//macro my_ to mutex functions
-#define pthread_mutex_init my_pthread_mutex_init
-#define pthread_mutex_lock my_pthread_mutex_lock
-#define pthread_mutex_unlock my_pthread_mutex_unlock
-#define pthread_mutex_destroy	my_pthread_mutex_destroy
+
+#define pthread_create(a,b,c,d) my_pthread_create(a,b,c,d)
+#define pthread_yield() my_pthread_yield()
+#define pthread_join(a,b) my_pthread_join(a,b)
+#define my_pthread_exit(a) my_my_pthread_exit(a)
+#define pthread_mutex_init(a,b) my_pthread_mutex_init(a,b)
+#define pthread_mutex_lock(a) my_pthread_mutex_lock(a)
+#define pthread_mutex_unlock(a) my_pthread_mutex_unlock(a)
+#define pthread_mutex_destroy(a)	my_pthread_mutex_destroy(a)
 
 #endif
-
+*/
 #endif
+
+
+
