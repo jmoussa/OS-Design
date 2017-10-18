@@ -390,10 +390,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
     spin_aquire(LOCK);
-    //TODO: load next thread in the queue
     __sync_lock_release(&mutex);
     spin_release(LOCK);
-    //if nextThread!=null then wake up the next thread
+    current_thread->status = WAITING; 
     return 0;
 }
 
