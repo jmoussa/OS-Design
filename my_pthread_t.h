@@ -33,7 +33,7 @@
 
 //StackSize of each thread : 16 Kilobytes
 #define MEM 16384
-#define LEVELS 4
+#define LEVELS 5
 //Quantum duration : 25 ms
 #define QUANTUM 25000
 //Check for starvation every 50 quanta
@@ -93,9 +93,7 @@ struct queue{
     int counter;
 };
 
-
-struct queue Queue[7]; // all queues 5=running,6=waiting,7=completed
-
+struct queue Queue[7]; // all queues 4=running,5=waiting,6=completed
 
 tcb *tcbs[1000]; // all the tcbs that you could have are intialized.
 tcb *current_thread;
