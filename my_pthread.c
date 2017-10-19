@@ -272,6 +272,7 @@ struct queue peek(){
     while(Queue[i].counter==0){
         i++;
     }
+	//printf("Priority: %d\n",i);
 	return Queue[i];
 }	
 void wrapperfunction(void *(*function)(void*),void * arg,void * retval){
@@ -283,7 +284,7 @@ void my_pthread_init(){
 	sigemptyset(&sigProcMask);
 	sigaddset(&sigProcMask, SIGALRM);
 	main_thread = malloc(sizeof(tcb));
-	main_thread->tid = tcb_num++;
+	main_thread->tid = tcb_num;
 	main_thread->priority = 0;
 	my_enqueue(&Queue[0],main_thread);
 	//scheduler();
@@ -296,7 +297,7 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
     		start = 0;
     		my_pthread_init();
     }
-    printf("Thread Created\n");
+    //printf("Thread Created\n");
     tcb* my_tcb= malloc(sizeof(tcb));
     //Thread status is decided by scheduler
     *thread = tcb_num;
@@ -331,10 +332,17 @@ int my_pthread_yield() {
     my_enqueue(&Queue[5],current_thread);//places current tcb in waiting queue
     current_thread->status=WAITING;
 	printf("----STATUS: WAITING\n");
-	
+
+	int oldID =  current_thread->tid;
 	current_thread=peek().front;//changes tcb pointer to new current tcb
-	
-	swapcontext(&current_thread->thread_context,current_thread->thread_context.uc_link);
+	int newID = current_thread->tid;
+	printf("Old Current - %d\n", oldID);
+	printf("New Current - %d\n", newID);
+	if(oldID != newID){
+		if(swapcontext(&current_thread->thread_context,current_thread->thread_context.uc_link)==-1){
+			printf("swapcontext - CONTEXT ERRROR\n");
+		}
+	}	
 	return 0;
 
 }
@@ -357,14 +365,15 @@ int my_pthread_join(my_pthread_t thread, void **value_ptr) {
 	printf("Waitee tid: %d\n",  t->tid);
     if(t->tid==current_thread->tid){
         printf("Same Thread! DON'T JOIN\n");
-		return ESRCH;//same thread
+		return 0;//same thread
     }else if(t->joinid==t->tid || current_thread->joinid==t->tid){
         printf("DEADLOCK\n");
 		return EDEADLK;//1 means error EDEADLK
         //this means two threads joined with eachother or a thread joined with itself
     } 
     while(t->status!=EXITED){
-        if(t->thread_params.joinable==0){
+        printf("t->status : %d\n", t->status);
+		if(t->thread_params.joinable==0){
             printf("NOT JOINABLE\n");
 			return EINVAL;//not joinable
         }
@@ -374,10 +383,12 @@ int my_pthread_join(my_pthread_t thread, void **value_ptr) {
 		}
     }
 	printf("THREAD FINISHED YIELD, NOW EXITING");
-    *value_ptr=t->retval;
+    
+	*value_ptr=t->retval;
     my_pthread_exit(*value_ptr);
 	return 0;
 }
+
 /* initial the mutex lock */
 int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
     mutex->lock = 0;
