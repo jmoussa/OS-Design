@@ -281,8 +281,6 @@ void wrapperfunction(void *(*function)(void*),void * arg,void * retval){
 }
 
 void my_pthread_init(){
-	sigemptyset(&sigProcMask);
-	sigaddset(&sigProcMask, SIGALRM);
 	main_thread = malloc(sizeof(tcb));
 	main_thread->tid = tcb_num;
 	main_thread->priority = 0;
@@ -292,6 +290,8 @@ void my_pthread_init(){
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
 	signal(SIGALRM, scheduler);
+	sigemptyset(&sigProcMask);
+	sigaddset(&sigProcMask, SIGALRM);
 	sigprocmask(SIG_BLOCK, &sigProcMask, NULL);
 	if(start == 1){
     		start = 0;
@@ -307,6 +307,7 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
     getcontext(&my_tcb->thread_context);
     my_tcb->thread_context.uc_link=NULL;//initializes ucontext_t
     my_tcb->priority = 0;
+	my_tcb->joinid = -1;
     //sigfillset(&my_tcb->thread_context.uc_sigmask);
     my_tcb->thread_context.uc_stack.ss_sp = malloc(MEM);
     my_tcb->thread_context.uc_stack.ss_flags = 0;
@@ -323,6 +324,45 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
     scheduler();
     return 0;
 }
+/*
+int my_pthread_yield() {
+	current_thread->status = YIELDED;
+	scheduler();
+	return 1;
+}
+
+int my_pthread_join(my_pthread_t thread, void **value_ptr) {
+	sigprocmask(SIG_BLOCK, &sigProcMask, NULL);
+	if(tcbs[thread]->tid != thread){ return ESRCH;}
+	if(tcbs[thread]->joinid != -1){return EINVAL;}
+	if(tcbs[thread]->tid == current_thread->joinid){return EDEADLK;}
+	tcbs[thread]->joinid = current_thread->tid;
+	current_thread->status = WAITING;
+	
+	//my_enqueue(&tcbs[thread]->waiting, current_thread);
+	tcbs[thread]->waiting = current_thread;
+	*value_ptr = tcbs[thread]->retval;
+	sigprocmask(SIG_UNBLOCK, &sigProcMask, NULL);
+	scheduler();
+	return 1;
+}
+
+void my_pthread_exit(void *value_ptr) {
+	sigprocmask(SIG_BLOCK, &sigProcMask, NULL);
+	value_ptr=current_thread->retval;
+	current_thread->status = EXITED;
+	if(current_thread->joinid != -1){
+		int i = 0;
+		i = my_enqueue(&Queue[current_thread->waiting->priority],current_thread->waiting);	
+		if(i != 1){perror("TCB was not enqueued");}
+	}
+	current_thread->status = EXITED;
+	free(&current_thread->thread_context.uc_stack);//clears stack in thread's context
+   sigprocmask(SIG_BLOCK, &sigProcMask, NULL);
+   scheduler();
+} 
+ */
+
 
 /* give CPU pocession to other user level threads voluntarily */
 int my_pthread_yield() {
