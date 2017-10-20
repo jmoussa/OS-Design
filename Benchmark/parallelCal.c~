@@ -26,7 +26,6 @@ int  sum = 0;
 
 /* A CPU-bound task to do parallel array addition */
 void parallel_calculate(void* arg) {
-	printf("Here\n");
 	int i = 0, j = 0;
 	int n = *((int*) arg);
 
@@ -97,6 +96,7 @@ int main(int argc, char **argv) {
 		pthread_create(&thread[i], NULL, &parallel_calculate, &counter[i]);
 
 	for (i = 0; i < thread_num; ++i)
+		//printf("Join %d\n",i);
 		pthread_join(thread[i], NULL);
 
 	printf("sum is: %d\n", sum);

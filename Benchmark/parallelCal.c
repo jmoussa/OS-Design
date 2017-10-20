@@ -92,19 +92,12 @@ int main(int argc, char **argv) {
 	// mutex init
 	pthread_mutex_init(&mutex, NULL);
 
-	for (i = 0; i < thread_num; ++i){
-		if(pthread_create(&thread[i], NULL, &parallel_calculate, &counter[i])==0 ){
-			printf("\n-parallelCal THREAD %d CREATED-\n", i);
-		}
-	}
+	for (i = 0; i < thread_num; ++i)
+		pthread_create(&thread[i], NULL, &parallel_calculate, &counter[i]);
 
 	for (i = 0; i < thread_num; ++i){
-		printf("\n-parallelCal Thread %d to join\n", i);
-		if( pthread_join(thread[i], NULL)==0 ){
-			printf("\n-parallelCal THREAD JOINED-\n");
-		}else{
-			printf("\n-parallelCal JOIN FUCKED UP-\n");
-		}
+		printf("Join %d\n",i);
+		pthread_join(thread[i], NULL);
 	}
 
 	printf("sum is: %d\n", sum);

@@ -32,7 +32,7 @@
 
 //StackSize of each thread : 16 Kilobytes
 #define MEM 16384
-#define LEVELS 5
+#define LEVELS 3
 //Quantum duration : 25 ms
 #define QUANTUM 25000
 //Check for starvation every 50 quanta
@@ -56,8 +56,8 @@ struct thread_info {
     void *arg;//arguments for function
     int joinable;
     int queue;
-    long int readyTime;
-    int execTime;
+    long readyTime;
+    long int execTime;
     long int deadline;
     struct thread_info *recov_info;
 };
@@ -76,6 +76,7 @@ typedef struct threadControlBlock {
     struct thread_info thread_params;//thread info
     int executedTime;//tells how long program has been running	UINT
     struct threadControlBlock * nextThread;
+    struct threadControlBlock * waiting;
     int priority;//used by scheduler object UINT
     int magic_key;//used for debugging		UINT
 }tcb;
@@ -84,6 +85,7 @@ typedef struct threadControlBlock {
 typedef struct my_pthread_mutex_t {
     int lock; //0 or 1, set to 0(unlocked) by default
     int flags; //TODO: Define further?
+    struct queue * waiting_queue;
 } my_pthread_mutex_t;
 
 struct queue{
@@ -108,7 +110,7 @@ sigset_t sigProcMask;
 struct itimerval it;
 struct sigaction act, oact;
 //wrapper function
-void wrapperfunction(void *(*function)(void*),void * arg,void * retval);
+void wrapperfunction(void *(*function)(void*),void * arg,void ** retval);
 //next thread to run for the scheduler
 tcb * get_next_thread_to_run();
 //get current time
