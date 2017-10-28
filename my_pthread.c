@@ -2,50 +2,37 @@
 // Author:	Yujie REN
 // Date:	09/23/2017
 
-// name: nandan Thakkar
-// username of iLab: nt284
-// iLab Server:
+// name: Nandan Thakkar,Matthew Mann, Joseph Moussa
+// username of iLab: nt284, mam1010, jam791
+// iLab Server: ls
 
 #include "my_pthread_t.h"
 #include <errno.h>
 
 int start = 1;
 
-my_pthread_mutex_t *LOCK;
+my_pthread_mutex_t LOCK = {0,0,NULL};
 int maintainence_cycle_counter = 0;
 int tcb_num = 1;
 
-//tcb * tcbPtr = tcbs[0];
 tcb *current_thread, *main_thread;
 static int Count_time_executed_for_maintainance_cycle = 0;
 
-void spin_acquire(my_pthread_mutex_t *mutex){
-    //my_pthread_mutex_init(mutex, NULL);
-    while(1){
-        //while(mutex->lock==1);
-        if(__sync_lock_test_and_set(&mutex->lock, 1)==0){
-            break;
-        }
-    }
+void spin_acquire(my_pthread_mutex_t mutex){
+	while(1){
+		while(mutex.lock==1);
+		if(__sync_lock_test_and_set(&mutex.lock, 1)==0){
+			break;		
+		}	
+	}
 }
 
-void spin_release(my_pthread_mutex_t *mutex){
-    if(!mutex)return;
-    mutex->lock = 0;
+void spin_release(my_pthread_mutex_t mutex){
+    mutex.lock = 0;
 }
-
-//void init(){
-//    int i = 0;
-//    for(i = 0; i < 7 ; i++){
-//        back[i] = &Queue[i];
-//        front[i] = &Queue[i];
-//    }
-//}
-
 
 void scheduler(){
     struct itimerval my_timer;
-    //ucontext_t uc_temp; //To store the context of the main thread
     
     //clear the timer
     my_timer.it_value.tv_sec = 0;
@@ -53,7 +40,6 @@ void scheduler(){
     my_timer.it_interval.tv_sec = 0;
     my_timer.it_interval.tv_usec = 0;
     setitimer(ITIMER_REAL, &my_timer, NULL);
-    //current_thread=peek().front;
     tcb * temp = current_thread;
     if (current_thread != NULL)
     {
@@ -61,11 +47,6 @@ void scheduler(){
         temp->thread_params.execTime =  get_current_time() - temp->thread_params.readyTime;
         temp->executedTime += temp->thread_params.execTime;
         Count_time_executed_for_maintainance_cycle += (current_priority +1)*QUANTUM;
-        //int my_pthread_init(){
-        	//    sigemptyset(&sigProcMask);
-        	//    sigaddset(&sigProcMask, SIGPROF);
-        	//    return 0;
-        	//}
         if (temp->status == WAITING){
             current_thread = peek().front;
             if (current_thread != NULL)
@@ -76,7 +57,7 @@ void scheduler(){
             //pass
             int indicator = 0;
             tcb * ind = my_dequeue(&Queue[current_thread->priority]);
-            indicator = my_enqueue(&Queue[6],current_thread);
+            indicator = my_enqueue(&Queue[5],current_thread);
             if(indicator != 1){perror("Enqueue did not work\n");}
             current_thread = peek().front;
             if (current_thread != NULL){
@@ -88,12 +69,10 @@ void scheduler(){
         {
             //put the thread back into the original queue
             int add = 0;
-            //getcontext(&temp->thread_context);
             add = my_enqueue(&Queue[my_dequeue(&Queue[temp->priority])->priority], temp);
             if (add != 1) {perror("thread control block cannot be enqueued");}
             current_thread = peek().front;
             swapcontext(&temp->thread_context,&current_thread->thread_context);
-            //setcontext(&current_thread->thread_context);
             if (current_thread != NULL)
                 current_thread->status = RUNNING;
         }
@@ -103,21 +82,17 @@ void scheduler(){
             if (current_priority + 1 <= LEVELS){
             	new_priority = current_priority + 1;
             	 int add = 0;
-            my_enqueue(&Queue[new_priority], my_dequeue(&Queue[new_priority-1]) );
-            //if (add != 1) {perror("thread control block cannot be enqueued);}
-            current_thread = peek().front;
-            current_thread->priority=new_priority;
-            if (current_thread != NULL){
-                current_thread->status = RUNNING;
-            	 //current_thread->thread_params.readyTime=;
-         	}
+            	 my_enqueue(&Queue[new_priority], my_dequeue(&Queue[new_priority-1]) );
+            	 current_thread = peek().front;
+            	 current_thread->priority=new_priority;
+            	 if (current_thread != NULL){
+                	 current_thread->status = RUNNING;
+         		 }
             }
             else{
             	my_enqueue(&Queue[current_priority], my_dequeue(&Queue[current_priority]) );
             } //Priority cannot exceed anymore
                
-            //scheduler_add_thread(temp, new_priority);
-        
           
         }
     }
@@ -150,17 +125,10 @@ void scheduler(){
     }
 	 
     my_timer.it_value.tv_sec = 0;
-    //my_timer.it_value.tv_usec = 50000;
     my_timer.it_value.tv_usec = (current_thread->priority +1)*QUANTUM;
     my_timer.it_interval.tv_sec = 0;
     //set timer
     setitimer(ITIMER_REAL, &my_timer, NULL);
-
-    //if(temp != NULL){
-    //getcontext(&uc_temp);
-    //temp->uc = uc_temp;
-    //}
-    
     if (current_thread != NULL) //Context switch happens here
     {
         current_thread->thread_params.readyTime = get_current_time();
@@ -170,14 +138,11 @@ void scheduler(){
             swapcontext(&(temp->thread_context), &(current_thread->thread_context));
          }
         else{
-        /*
-         stores main context
-         (enters else statement only in first call to scheduler)
-         *///printf("Thread ID:%d\n",temp->tid);
             swapcontext(&main_thread->thread_context,&current_thread->thread_context);
-         }
+        }
     }
-    //return;
+    
+    
 
 }
 
@@ -199,14 +164,6 @@ long int get_current_time(){
     gettimeofday(&tval, NULL);
     return (tval.tv_sec * 1000000) + tval.tv_usec;
 }
-
-
-//int my_pthread_init(){
-//    sigemptyset(&sigProcMask);
-//    sigaddset(&sigProcMask, SIGPROF);
-//    return 0;
-//}
-
 
 void queue_init(struct queue * my_queue){
     my_queue->back = NULL;
@@ -247,35 +204,6 @@ tcb * my_dequeue(struct queue * my_queue){
     }
 }
 
-
-/*
-int enqueue(struct tcb my_tcb,int a){
-    struct Node *end= malloc(sizeof(struct Node));
-    end->head=my_tcb;
-    end->next=NULL;
-    if(front[a]==NULL){
-        front[a]=end;
-    }
-    else{
-        back[a]->next=end;
-    }
-    back[a]=end;
-    my_tcb.thread_params.queue=a;
-    return 1;
-}
-*/
-//removes tcb to from queue
-/*
-int dequeue(int a){
-    struct Node temp=*front[a];
-    front[a]=front[a]->next;
-    if(front[a]==NULL){
-        back[a]=NULL;
-    }
-    free(&temp);
-    return 1;
-}
-*/
 //looks at next value in queue
 struct queue peek(){
     int i=0;
@@ -287,31 +215,22 @@ struct queue peek(){
 void wrapperfunction(void *(*function)(void*),void * arg,void ** retval){
 	signal(SIGALRM, scheduler);
 	*retval=function(arg);
-	//may put exit over here;
-	//my_pthread_exit();exit
-	//my_pthread_exit(retval);
-	printf("in wraper function");
-	/*if(current_thread->joinid != -1){
-			int i = 0;
-			i = my_enqueue(&Queue[current_thread->waiting->priority],current_thread->waiting);
-			if(i != 1){perror("TCB was not enqueued");}
-		}*/
-		current_thread->status = EXITED;
-		free(current_thread->thread_context.uc_stack.ss_sp);
-		printf("leaving wraper function");
-		scheduler();
+	printf("in wraper function\n");
+	current_thread->status = EXITED;
+	free(current_thread->thread_context.uc_stack.ss_sp);
+	printf("leaving wraper function\n");
+	scheduler();
 	return;
 }
 
 void my_pthread_init(){
-	//current_thread=peek().front;
 	main_thread = malloc(sizeof(tcb));
 	main_thread->tid = 0;
 	main_thread->priority = 0;
 	my_enqueue(&Queue[0],main_thread);
 	getcontext(&main_thread->thread_context);
-	//scheduler();
 }
+
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
 	signal(SIGALRM, scheduler);
@@ -327,13 +246,11 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
     if(start == 1){
     		start = 0;
     		my_pthread_init();
-    		//swapcontext(&main_thread->thread_context,&my_tcb->thread_context);
     }
     getcontext(&my_tcb->thread_context);
     my_tcb->thread_context.uc_link=NULL;//initializes ucontext_t
     my_tcb->priority = 0;
     my_tcb->joinid = -1;
-    //sigfillset(&my_tcb->thread_context.uc_sigmask);
     my_tcb->thread_context.uc_stack.ss_sp = malloc(MEM);
     my_tcb->thread_context.uc_stack.ss_flags = 0;
     my_tcb->thread_context.uc_stack.ss_size = MEM;
@@ -352,28 +269,20 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
     return 0;
 }
 
-
 int my_pthread_yield() {
 	printf("YILEDED\n");
 	current_thread->status = YIELDED;
-	//printf("Locked!\n");
-	//scheduler();
 	return 1;
 }
 
 int my_pthread_join(my_pthread_t thread, void **value_ptr) {
-	//sigprocmask(SIG_BLOCK, &sigProcMask, NULL);
 	if(tcbs[thread]->tid != thread){
-		printf("j1\n");
 		perror("ESRCH"); return ESRCH;}
 	if(tcbs[thread]->joinid != -1){
-		printf("j2\n");
 		perror("EINVAL"); return EINVAL;}
 	if(tcbs[thread]->tid == current_thread->joinid && current_thread->joinid != -1){
-		printf("j3\n");
 		perror("EDEADLK"); return EDEADLK;}
 	if(tcbs[thread]->status == EXITED){
-		printf("j4\n");
 		//*value_ptr = tcbs[thread]->retval;
 		return 1;
 	}
@@ -381,10 +290,6 @@ int my_pthread_join(my_pthread_t thread, void **value_ptr) {
 	my_pthread_yield();
 	printf("Joined\n");
 	
-	//my_enqueue(&tcbs[thread]->waiting, current_thread);
-	//tcbs[thread]->waiting = current_thread;
-	//*value_ptr = tcbs[thread]->retval;
-	//sigprocmask(SIG_UNBLOCK, &sigProcMask, NULL);
 	scheduler();
 	return 1;
 }
@@ -401,57 +306,10 @@ void my_pthread_exit(void *value_ptr) {
 	}
 	current_thread->status = EXITED;
 	free(current_thread->thread_context.uc_stack.ss_sp);//clears stack in thread's context
-    sigprocmask(SIG_BLOCK, &sigProcMask, NULL);
-    scheduler();
+   sigprocmask(SIG_BLOCK, &sigProcMask, NULL);
+   scheduler();
 }
 
-
-/* give CPU pocession to other user level threads voluntarily 
-int my_pthread_yield() {
-	sigprocmask(SIG_BLOCK, &sigProcMask, NULL);
-	 current_thread->status=1;
-    my_dequeue(&Queue[current_thread->thread_params.queue]);//removes from its current queue
-    my_enqueue(&Queue[5],current_thread);//places current tcb in waiting queue
-    current_thread=peek().front;//changes tcb pointer to new current tcb
-    //gets current context from current tcb and swaps
-    sigprocmask(SIG_UNBLOCK, &sigProcMask, NULL);
-    swapcontext(&current_thread->thread_context,current_thread->thread_context.uc_link);
-    return 0;
-}*/
-
-/* terminate a thread 
-void my_pthread_exit(void *value_ptr) {
-	
-	value_ptr=current_thread->retval;
-	current_thread->status=YIELDED;//changes status to finished
-    my_dequeue(&Queue[current_thread->thread_params.queue]);
-    free(&current_thread->thread_context.uc_stack);//clears stack in thread's context
-    my_enqueue(&Queue[6],current_thread);//places finished thread in completed queue
-    current_thread=peek().front;
-}*/
-
-/* wait for thread termination 
-int my_pthread_join(my_pthread_t thread, void **value_ptr) {
-	sigprocmask(SIG_BLOCK, &sigProcMask, NULL);
-    tcb * t=tcbs[thread];
-    t->joinid=current_thread->tid;
-    if(t->tid!=thread){
-        return ESRCH;
-    }
-    while(t->status!=EXITED){
-        if(t->thread_params.joinable==0){
-            return EINVAL;//not joinable
-        }
-
-        else if(t->joinid==t->tid || current_thread->joinid==t->tid){
-            return EDEADLK;//1 means error EDEADLK
-            //this means two threads joined with eachother or a thread joined with itself
-        }
-        my_pthread_yield();
-    }
-    *value_ptr=t->retval;
-    return 0;
-}*/
 /* initial the mutex lock */
 int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
 	 printf("Mutex initialized!\n");
@@ -462,29 +320,26 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
 
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
-    //if(my_pthread_mutex_init(mutex, NULL)!=0){
-    	//printf("Mutex Not initialized!\n");
-    	//return 1;
-    //}
-	while(__sync_lock_test_and_set(&mutex->lock, 1)==0){ //shared mutex was locked
+	while(__sync_lock_test_and_set(&mutex->lock, 1)==0){ //shared mutex was unlocked
 	printf("Locked!\n");
-        //spin_acquire(LOCK);
-        if(mutex->lock == 1){ //value of mutex->lock is
+        spin_acquire(LOCK);
+        if(mutex->lock == 1){ 
             my_pthread_yield();
-            //spin_release(LOCK);
-            //thread is in waiting queue and blocked
-        }//else{
-            //spin_release(LOCK);
-        //}
+            spin_release(LOCK);
+        }else{
+        		spin_release(LOCK);
+        }
+        
     }
     return 0; //got the lock
 }
 
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
+	spin_acquire(LOCK);	
 	printf("Unlocked!\n");
    __sync_lock_release(&mutex->lock);
-   //current_thread->status = WAITING; 
+   spin_release(LOCK);
    return 0;
 }
 

@@ -9,15 +9,7 @@
 #define MY_PTHREAD_T_H
 
 #define _GNU_SOURCE
-//#define USE_MY_PTHREAD 1
-#define pthread_create(a,b,c,d) my_pthread_create(a,b,c,d)
-#define pthread_yield() my_pthread_yield()
-#define pthread_join(a,b) my_pthread_join(a,b)
-#define my_pthread_exit(a) my_my_pthread_exit(a)
-#define pthread_mutex_init(a,b) my_pthread_mutex_init(a,b)
-#define pthread_mutex_lock(a) my_pthread_mutex_lock(a)
-#define pthread_mutex_unlock(a) my_pthread_mutex_unlock(a)
-#define pthread_mutex_destroy(a)	my_pthread_mutex_destroy(a)
+#define USE_MY_PTHREAD 1
 
 /* include lib header files that you need here: */
 #include <unistd.h>
@@ -47,7 +39,7 @@ typedef enum state
 } state;
 
 
-typedef int my_pthread_t; //UINT
+typedef uint my_pthread_t; //UINT
 
 
 //Thread info to be passed in TCB struct
@@ -94,15 +86,15 @@ struct queue{
     int counter;
 };
 
-struct queue Queue[7]; // all queues 4=running,5=waiting,6=completed
+struct queue Queue[6]; // all queues 4=waiting,5=completed
 
 tcb *tcbs[1000]; // all the tcbs that you could have are intialized.
 tcb *current_thread;
 //pointers to back of each queue
-struct Node* back[7];
+struct Node* back[6];
 
 //pointers to the front of each queue
-struct Node* front[7];
+struct Node* front[6];
 
 sigset_t sigProcMask;
 // Feel free to add your own auxiliary data structures
@@ -127,8 +119,8 @@ struct queue peek();
 void scheduler();
 
 /*spin-locks*/
-void spin_acquire(my_pthread_mutex_t *mutex);
-void spin_release(my_pthread_mutex_t * mutex);
+void spin_acquire(my_pthread_mutex_t mutex);
+void spin_release(my_pthread_mutex_t mutex);
 
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg);
@@ -153,20 +145,22 @@ int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex);
 
 /* destroy the mutex */
 int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex);
-/*
+
 #ifdef USE_MY_PTHREAD
 
-#define pthread_create(a,b,c,d) my_pthread_create(a,b,c,d)
-#define pthread_yield() my_pthread_yield()
-#define pthread_join(a,b) my_pthread_join(a,b)
-#define my_pthread_exit(a) my_my_pthread_exit(a)
-#define pthread_mutex_init(a,b) my_pthread_mutex_init(a,b)
-#define pthread_mutex_lock(a) my_pthread_mutex_lock(a)
-#define pthread_mutex_unlock(a) my_pthread_mutex_unlock(a)
-#define pthread_mutex_destroy(a)	my_pthread_mutex_destroy(a)
+#define pthread_t my_pthread_t
+#define pthread_mutex my_pthread_mutex_t
+#define pthread_create my_pthread_create
+#define pthread_yield my_pthread_yield
+#define pthread_join my_pthread_join
+#define my_pthread_exit my_my_pthread_exit
+#define pthread_mutex_init my_pthread_mutex_init
+#define pthread_mutex_lock my_pthread_mutex_lock
+#define pthread_mutex_unlock my_pthread_mutex_unlock
+#define pthread_mutex_destroy	my_pthread_mutex_destroy
 
 #endif
-*/
+
 #endif
 
 
