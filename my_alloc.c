@@ -33,9 +33,30 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
     }
     switch (sysReq)
     {
-    case LIBRARYREQ:
-    	  
-    	  return;
+    case LIBRARYREQ://allocates space the same way you do in the disk
+    	  current=SWAP;
+    	  while(current!=NULL){
+    	  	 //If the amount of space available is equal to the size of the space needed then you return that
+    	  	 if(current->test && current->segSpace==size){
+    	  	 	current->test=0; //This segment is no longer available
+    	  	 	return ((char*)current) + SEGSIZE;//allocated space starts after the nspace meant to signify beginning of segment data
+    	  	 }
+    	  	 //If the segment is bigger than what is needed. A segment of the required size is allocated while the rest is set aside
+    	  	 else if(current->test && current->segSpace>=size+SEGSIZE){
+    	  	 	Segment* newSeg=(Segment*) ((char*)current + SEGSIZE + size);//Makes pointer to where free space will be once the new space has been allocated
+    	  	 	newSeg->test=1;//This signifies the new area is free to use
+    	  	 	newSeg->next=current->next;//links are next to the previous space with the new space
+    	  	 	newSeg->segSpace=(current->segSpace) - size - SEGSIZE;//decreases size of free space by size of allocated data
+    	  	 	
+    	  	 	current->test=0;//allocated space is no longer free
+    	  	 	current->segSpace=size;//size of allocated space
+    	  	 	current->next=newSeg;//sets pointer to next segment equal to the free space
+    	  	 	return ((char*)current) + SEGSIZE;
+    	  	 }
+    	  	 current=current->next;//increments pointer
+    	  }
+    	  printf("There is no memory left in the SWAP SPACE\N");
+    	  return NULL;
         break;
     case THREADREQ:
     	  return;
