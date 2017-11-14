@@ -3,8 +3,8 @@
 int initialize = 1;
 static char *MEMORY;
 //signal handler
-static void sigHandler(int sig. siginfo_t *si, void *unused){
-
+static void sigHandler(int sig.siginfo_t *si, void *unused)
+{
 }
 //allocates memory for variable of size 'size' from file 'file' on line 'lineCaller'. 'sysReq' tells whether a library thread or disk made call
 void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
@@ -19,20 +19,20 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
         sa.sa_flags = SA_SIGINFO;
         sigemptyset(&sa.sa_mask);
         sa.sa_sigaction = sighandler;
-        if(sigaction(SISGEV,&sa,NULL)==-1){
-        	printf("Fatal error setting up signal handler\n");
-        	exit(EXIT_FAILURE); //explode!!
+        if (sigaction(SISGEV, &sa, NULL) == -1)
+        {
+            printf("Fatal error setting up signal handler\n");
+            exit(EXIT_FAILURE); //explode!!
         }
         initialize = 0;
-        
     }
     switch (sysReq)
     {
     case LIBRARYREQ:
-		break;
+        break;
     case THREADREQ:
-    	break;
+        break;
     case DISKREQ:
-    	break;
+        break;
     }
 }
