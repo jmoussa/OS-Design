@@ -10,7 +10,7 @@
 #define LIBRARYREQ 0
 #define THREADREQ 1
 #define DISKREQ 2
-#define SEGSIZE sizeof(Segment_t)
+#define 
 
 typedef struct Page_t
 {
