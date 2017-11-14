@@ -15,8 +15,11 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
     switch (sysReq)
     {
     case LIBRARYREQ:
-		break;
+
     case THREADREQ:
     case DISKREQ:
     }
 }
+my_alloc.c
+    Open with
+        Displaying my_alloc.c.
