@@ -14,11 +14,14 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
     {
         posix_memalign(void **(&MEMORY), SYS_PAGE_SIZE, PHYSICAL_MEM_SIZE);
         posix_memalign(void **(&SWAP), SYS_PAGE_SIZE, SWAP_FILE_SIZE);
+        //for signal handler
+        int i;
         struct sigaction sa;
         sa.sa_flags = SA_SIGINFO;
         sigemptyset(&sa.sa_mask);
         sa.sa_sigaction = sighandler;
         initialize = 0;
+        
     }
     switch (sysReq)
     {
