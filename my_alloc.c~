@@ -174,17 +174,34 @@ void deallocate(void *ptr, const char *file, int lineCaller, int sysReq){
 	Segment* sec = ((char*) ptr -SEGSIZE);//SEGSIZE is removed since the pointer points to the variable and not the segment data
 	//Makes sure sections hasn't been freed already
 	if( sec->test ){
-		printf("Error at line %d in file %s. Block has already been freed.\n",line,file);
+		printf("Error at line %d in file %s. Block has already been freed.\n",lineCaller,file);
 	}
 	//how memory is freed depends on the sysReq that called it
 	switch(sysReq){
 		case LIBRARYREQ:
-			
+			if( !freeMem(sec,NULL,LIBRARYREQ) ){//frees mem and checks to see it works
+				printf("Error at lin %d in file %s\n",lineCaller,file);
+			}
 			break;
 		case THREADREQ:
+			//finds page to be deallocated
+			for(int i=0; i<((PHYSICAL_MEM_SIZE/SYS_PAGE_SIZE)-PAGEMAX) ; i++){
+				if(Pages[i]->tid == current_thread->tid){
+					Page* page=Pages[i];
+				}
+			}
+			//checks to see if page is null
+			if(page=NULL){
+				mydeallocate(ptr,__FILE__,__LINE__,LIBRARYREQ);//deallocates pointer with library as the caller then
+				return;//this means the ptr points to not a page 
+			}
+			if( !freeMem(sec,page,THREADREQ) ){//frees up memory and checks to make sure it worked at the same time
+				printf("Error at lin %d in file %s\n",lineCaller,file);
+			}
 			break;
 		default://in case diskreq gets passed
-		
+			printf("Error at lin %d in file %s\n",lineCaller,file);
+			break;
 	}
 }
 
