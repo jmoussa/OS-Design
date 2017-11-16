@@ -103,16 +103,16 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 			//If the amount of space available is equal to the size of the space needed then you return that
 			if (current->test && current->segSpace == size)
 			{
-				current->test = 0;					//This segment is no longer available
+				current->test = 0;					 //This segment is no longer available
 				return ((char *)current) + SEG_SIZE; //allocated space starts after the nspace meant to signify beginning of segment data
 			}
 			//If the segment is bigger than what is needed. A segment of the required size is allocated while the rest is set aside
 			else if (current->test && current->segSpace >= size + SEG_SIZE)
 			{
 				Segment *newSeg = (Segment *)((char *)current + SEG_SIZE + size); //Makes pointer to where free space will be once the new space has been allocated
-				newSeg->test = 1;												 //This signifies the new area is free to use
-				newSeg->next = current->next;									 //links are next to the previous space with the new space
-				newSeg->segSpace = (current->segSpace) - size - SEG_SIZE;		 //decreases size of free space by size of allocated data
+				newSeg->test = 1;												  //This signifies the new area is free to use
+				newSeg->next = current->next;									  //links are next to the previous space with the new space
+				newSeg->segSpace = (current->segSpace) - size - SEG_SIZE;		  //decreases size of free space by size of allocated data
 
 				current->test = 0;		  //allocated space is no longer free
 				current->segSpace = size; //size of allocated space
@@ -131,16 +131,16 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 			//If the amount of space available is equal to the size of the space needed then you return that
 			if (current->test && current->segSpace == size)
 			{
-				current->test = 0;					//This segment is no longer available
+				current->test = 0;					 //This segment is no longer available
 				return ((char *)current) + SEG_SIZE; //allocated space starts after the nspace meant to signify beginning of segment data
 			}
 			//If the segment is bigger than what is needed. A segment of the required size is allocated while the rest is set aside
 			else if (current->test && current->segSpace >= size + SEG_SIZE)
 			{
 				Segment *newSeg = (Segment *)((char *)current + SEG_SIZE + size); //Makes pointer to where free space will be once the new space has been allocated
-				newSeg->test = 1;												 //This signifies the new area is free to use
-				newSeg->next = current->next;									 //links are next to the previous space with the new space
-				newSeg->segSpace = (current->segSpace) - size - SEG_SIZE;		 //decreases size of free space by size of allocated data
+				newSeg->test = 1;												  //This signifies the new area is free to use
+				newSeg->next = current->next;									  //links are next to the previous space with the new space
+				newSeg->segSpace = (current->segSpace) - size - SEG_SIZE;		  //decreases size of free space by size of allocated data
 
 				current->test = 0;		  //allocated space is no longer free
 				current->segSpace = size; //size of allocated space
@@ -159,16 +159,16 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 			//If the amount of space available is equal to the size of the space needed then you return that
 			if (current->test && current->segSpace == size)
 			{
-				current->test = 0;					//This segment is no longer available
+				current->test = 0;					 //This segment is no longer available
 				return ((char *)current) + SEG_SIZE; //allocated space starts after space meant to signify beginning of segment data
 			}
 			//If the segment is bigger than what is needed. A segment of the required size is allocated while the rest is set aside
 			else if (current->test && current->segSpace >= size + SEG_SIZE)
 			{
 				Segment *newSeg = (Segment *)((char *)current + SEG_SIZE + size); //Makes pointer to where free space will be once the new space has been allocated
-				newSeg->test = 1;												 //This signifies the new area is free to use
-				newSeg->next = current->next;									 //links are next to the previous space with the new space
-				newSeg->segSpace = (current->segSpace) - size - SEG_SIZE;		 //decreases size of free space by size of allocated data
+				newSeg->test = 1;												  //This signifies the new area is free to use
+				newSeg->next = current->next;									  //links are next to the previous space with the new space
+				newSeg->segSpace = (current->segSpace) - size - SEG_SIZE;		  //decreases size of free space by size of allocated data
 
 				current->test = 0;		  //allocated space is no longer free
 				current->segSpace = size; //size of allocated space
@@ -204,7 +204,7 @@ void deallocate(void *ptr, const char *file, int lineCaller, int sysReq)
 	case LIB_REQ:
 		if (!freeMem(sec, NULL, LIB_REQ))
 		{ //frees mem and checks to see it works
-			printf("Error at lin %d in file %s\n", lineCaller, file);
+			printf("Error at lin %d in file %s. Unable to free memory for library request.\n", lineCaller, file);
 		}
 		break;
 	case THREAD_REQ:
@@ -220,11 +220,11 @@ void deallocate(void *ptr, const char *file, int lineCaller, int sysReq)
 		if (page == NULL)
 		{
 			mydeallocate(ptr, __FILE__, __LINE__, LIB_REQ); //deallocates pointer with library as the caller then
-			return;											   //this means the ptr points to not a page
+			return;											//this means the ptr points to not a page
 		}
 		if (!freeMem(sec, page, THREAD_REQ))
 		{ //frees up memory and checks to make sure it worked at the same time
-			printf("Error at lin %d in file %s\n", lineCaller, file);
+			printf("Error at lin %d in file %s. Unable to free memory for thread request\n", lineCaller, file);
 		}
 		break;
 	default: //in case DISK_REQ gets passed
