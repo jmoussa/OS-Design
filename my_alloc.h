@@ -27,6 +27,8 @@ typedef struct Segment_t
     struct Segment_t *next;
 } Segment;
 
+int toFreeMem(int target);
+int toDisk(int target);
 int freeMem(Segment *block, Page *page, int sysReq);
 void swapPage(int source, int dest);
 void diskToMem(int source,int dest);
