@@ -26,6 +26,7 @@ typedef struct Segment_t
     unsigned int segSpace;
     struct Segment_t *next;
 } Segment;
+
 int freeMem(Segment *block, Page *page, int sysReq);
 void swapPage(int source, int dest);
 void diskToMem(int source,int dest);

@@ -4,6 +4,7 @@ int is_init = 0;
 static char *MEMORY;
 static char *SWAP;
 static Page** Pages;
+char* UserMem=NULL;
 //frees memory
 int freeMem(Segment *block, Page *page, int sysReq)
 {
@@ -61,8 +62,28 @@ int freeMem(Segment *block, Page *page, int sysReq)
 	}
 }
 void swapPage(int source, int dest){
+	char temp[SYS_PAGE_SIZE];//temporary page for switching the position of two pages
+	
+	mprotect(UserMem+(dest*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_READ | PROT_WRITE);
+	mprotect(UserMem+(source*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_READ | PROT_WRITE);//Protect both of the memory sections being swapped
+	
+	//change the location of the actual memory
+	memcpy(temp , UserMem+(dest*SYS_PAGE_SIZE) , SYS_PAGE_SIZE);
+	memcpy(UserMem+(dest*SYS_PAGE_SIZE) , UserMem+(source*SYS_PAGE_SIZE) , SYS_PAGE_SIZE);
+	memcpy(UserMem+(source*SYS_PAGE_SIZE) , temp , SYS_PAGE_SIZE);
+	
+	Page* tempP;//switch them within their array
+	tempP=Pages[dest];
+	Pages[dest]=Pages[source];
+	Pages[source]=tempP;
+	
+	//unprotect the memory since it is done being moved
+	mprotect(UserMem+(dest*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_NONE);
+	mprotect(UserMem+(source*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_NONE);//Protect both of the memory sections being swapped
+	
 }
 void diskToMem(int source,int dest){
+	
 }
 //signal handler
 static void sigHandler(int sig, siginfo_t *si, void *unused)
@@ -135,6 +156,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 			Pages[i] = Page * myallocate(sizeof(Page), __FILE__, __LINE__, LIB_REQ);
 			Pages[i]->isFree = 1;
 		}
+		UserMem= &MEMORY[MAX_NUM_PAGES*SYS_PAGE_SIZE];
 		//Makes a page array inside the virtual memory
 		DiskPages = (Page **)myallocate(sizeof(Page *) * (MAX_NUM_PAGES), __FILE__, __LINE__, DISK_REQ);
 		{
