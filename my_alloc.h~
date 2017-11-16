@@ -28,7 +28,6 @@ typedef struct Segment_t
 } Segment;
 int freeMem(Segment *block, Page *page, int sysReq);
 void swapPage(int source, int dest);
-void diskToMem(int source,int dest);
 void *shalloc(size_t size);
 void *myallocate(size_t size, const char *file, int lineCaller, int sysReq);
 void deallocate(void *ptr, const char *file, int lineCaller, int sysReq);

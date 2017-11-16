@@ -62,8 +62,6 @@ int freeMem(Segment *block, Page *page, int sysReq)
 }
 void swapPage(int source, int dest){
 }
-void diskToMem(int source,int dest){
-}
 //signal handler
 static void sigHandler(int sig, siginfo_t *si, void *unused)
 {
@@ -95,7 +93,7 @@ static void sigHandler(int sig, siginfo_t *si, void *unused)
 	//Swaps the needed page from the memory to the disk
 	for(int i=0; i< ; i++){
 		if(Pages[i]->tid == current_thread->tid && Pages[i]->pid==tarPage){
-			diskToMem();
+			
 			mprotect((MAX_NUM_PAGES*SYS_PAGE_SIZE)+(i*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_READ | PROT_WRITE);
 			swapped=1;
 			break;
