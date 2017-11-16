@@ -1,6 +1,6 @@
 #include "my_malloc.h"
 
-int initialize = 1;
+int is_init = 0;
 Segment_t static char *MEMORY;
 static char *SWAP;
 //frees memory
@@ -18,7 +18,7 @@ int freeMem(Segment *block, Page *page, int sysReq)
 		break;
 	case THREAD_REQ:
 		//Looks for page that deallocate wants
-		for (int i = 0; i < ((PHYSICAL_MEM_SIZE / SYS_PAGE_SIZE) - MAX_NUM_PAGES); i++)
+		for (int i = 0; i < ((PHYS_MEM_SIZE / SYS_PAGE_SIZE) - MAX_NUM_PAGES); i++)
 		{
 			if (Pages[i]->tid == page->tid)
 			{
@@ -68,11 +68,11 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 {
 	//keeps track of current location when traversing memory within this function
 	Segment *current;
-	//Initializes array for vm
-	if (initialize = 1)
+	//is_inits array for vm
+	if (is_init = 0)
 	{
 		//page aligns memory and makes the arrays for main memory and swap files
-		posix_memalign(void **(&MEMORY), SYS_PAGE_SIZE, PHYSICAL_MEM_SIZE);
+		posix_memalign(void **(&MEMORY), SYS_PAGE_SIZE, PHYS_MEM_SIZE);
 		posix_memalign(void **(&SWAP), SYS_PAGE_SIZE, SWAP_FILE_SIZE);
 		//initializes signal handler in this function
 		struct sigaction sa;
@@ -85,14 +85,14 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 			exit(EXIT_FAILURE); //explode!!
 		}
 		//Makes a page array inside the physical memory
-		Pages = (Page **)myallocate(sizeof(Page *) * ((PHYSICAL_MEM_SIZE / SYS_PAGE_SIZE) - MAX_NUM_PAGES), __FILE__, __LINE__, DISK_REQ);
-		for (int i = 0; i < ((PHYSICAL_MEM_SIZE / SYS_PAGE_SIZE) - MAX_NUM_PAGES); i++)
+		Pages = (Page **)myallocate(sizeof(Page *) * ((PHYS_MEM_SIZE / SYS_PAGE_SIZE) - MAX_NUM_PAGES), __FILE__, __LINE__, DISK_REQ);
+		for (int i = 0; i < ((PHYS_MEM_SIZE / SYS_PAGE_SIZE) - MAX_NUM_PAGES); i++)
 		{
 			Pages[i] = Page * myallocate(sizeof(Page), __FILE__, __LINE__, LIB_REQ);
 			Pages[i]->isFree = 1;
 		}
-		//makes initialize happen once
-		initialize = 0;
+		//makes is_init happen once
+		is_init = 1;
 	}
 	switch (sysReq)
 	{
@@ -186,7 +186,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 void deallocate(void *ptr, const char *file, int lineCaller, int sysReq)
 {
 	//Checks to see if pointer is out of bounds
-	if ((char *)ptr < &Memory[0] || (char *)ptr < &Memory[PHYSICAL_MEM_SIZE])
+	if ((char *)ptr < &Memory[0] || (char *)ptr < &Memory[PHYS_MEM_SIZE])
 	{
 		printf("Free Error at line %d of file %s\n", line, file);
 		return;
@@ -209,7 +209,7 @@ void deallocate(void *ptr, const char *file, int lineCaller, int sysReq)
 		break;
 	case THREAD_REQ:
 		//finds page to be deallocated
-		for (int i = 0; i < ((PHYSICAL_MEM_SIZE / SYS_PAGE_SIZE) - MAX_NUM_PAGES); i++)
+		for (int i = 0; i < ((PHYS_MEM_SIZE / SYS_PAGE_SIZE) - MAX_NUM_PAGES); i++)
 		{
 			if (Pages[i]->tid == current_thread->tid)
 			{
