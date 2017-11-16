@@ -2,7 +2,7 @@
 // Author:	Yujie REN
 // Date:	09/23/2017
 
-// name:
+// name: Joe Moussa, Matt Mann, Anil Tilve
 // username of iLab:
 // iLab Server:
 #ifndef MY_PTHREAD_T_H
