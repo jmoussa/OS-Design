@@ -22,11 +22,16 @@ void initializePage(int Pid){
 	else{
 		mainPnum = current_thread_page;
 	}
-	/*
+
+    page->isFree = 0;
+	
 	if(page->pid==0){
-		Segment* 
+		Segment* root = (Segment*) UserMem;
+        root->test = 1;
+        root->segSpace = SYS_PAGE_SIZE - SEG_SIZE;
+        root->next = NULL;
 	}
-	*/
+	
 }
 //frees memory
 int freeMem(Segment *block, Page *page, int sysReq)
