@@ -7,6 +7,24 @@ static Page** Pages;
 static Page** DiskPages;
 char* UserMem=NULL;
 char* UserDisk=NULL;
+
+//Initializes a page
+void initializePage(int Pid){
+	Page* page=Pages[pid];
+	
+	page->tid=current_thread->tid;
+	page->pid=Pid;
+	/*
+	if(){
+	}
+	else{
+	}
+	
+	if(page->pid==0){
+		Segment* 
+	}
+	*/
+}
 //frees memory
 int freeMem(Segment *block, Page *page, int sysReq)
 {
@@ -262,7 +280,27 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 		return NULL;
 		break;
 	case THREAD_REQ: //TODO: this case is not finished
-		current = MEMORY;
+		int current_tid=current_thread->tid;//currently running thread
+		current = (Segment*) UserMem;//starting point for memory location
+		
+		//searches for page in swap file and puts it into the physical memory
+		for(int i=0; i<MAX_NUM_PAGES ; i++){
+			if(DiskPages[i]->tid == thread && i != DiskPages[i]->pid){
+				diskToMem(i,DiskPages[i]->pid);
+			}
+		}
+		////////////////////////////////////////
+		//I'm not sure what this section of code is for
+		Page* page = Pages[0];
+		if(page->tid != thread){
+			if(toFreeMem(0) != 1){
+				printf("Could not allocate space\n");
+				return NULL;
+			}
+			initializePage(0);
+		}
+		////////////////////////////////////////
+		
 		while (current != NULL)
 		{
 			//If the amount of space available is equal to the size of the space needed then you return that
@@ -286,7 +324,32 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 			}
 			current = current->next; //increments pointer
 		}
-		printf("There is no memory left in the SWAP SPACE\nError at line %d of file %s\n", line, file);
+		
+		if(SEG_SIZE + size >((int)((char*) Memory + PHYS_MEM_SIZE + SEG_SIZE))){
+			printf("Error at line %d of file %s\n Not enough memory\n");
+			return NULL;
+		}
+		
+		//checks how many pages are free and how many we need
+		int pagesRequired = ((SEG_SIZE + size)/SYS_PAGE_SIZE) + 1;
+		int amountFree=0;
+		for(int i=0; i<MAX_NUM_PAGES ; i++){
+			if(Pages[i]->isFree){
+				amountFree++;
+			}
+		}
+		for(int i=0; i<MAX_NUM_PAGES ; i++){
+			if(DiskPages[i]->isFree){
+				amountFree++;
+			}
+		}
+		pagesRequired = (amountFree >= pagesRequired) ? pagesRequired : 0;
+		
+		if( pagesRequired > 0 ){
+			
+		}
+		
+		printf("There is no memory left in the SWAP SPACE\nError at line %d of file %s\n", lineCaller, file);
 		return NULL;
 		break;
 	case DISK_REQ:
@@ -314,7 +377,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 			}
 			current = current->next; //increments pointer
 		}
-		printf("There is no memory left in the SWAP SPACE\nError at line %d of file %s\n", line, file);
+		printf("There is no memory left in the SWAP SPACE\nError at line %d of file %s\n", lineCaller, file);
 		return NULL;
 		break;
 	}

@@ -27,11 +27,12 @@ typedef struct Segment_t
     struct Segment_t *next;
 } Segment;
 
-int toFreeMem(int target);
-int toDisk(int target);
+void initializePage(int pid);
+int toFreeMem(int target);//gets passed a page id
+int toDisk(int target);//gets passed a page id
 int freeMem(Segment *block, Page *page, int sysReq);
-void swapPage(int source, int dest);
-void diskToMem(int source,int dest);
+void swapPage(int source, int dest);//gets passed page ids
+void diskToMem(int source,int dest);//gets passed page ids
 void *shalloc(size_t size);
 void *myallocate(size_t size, const char *file, int lineCaller, int sysReq);
 void deallocate(void *ptr, const char *file, int lineCaller, int sysReq);
