@@ -13,13 +13,16 @@ void initializePage(int Pid){
 	Page* page=Pages[pid];
 	
 	page->tid=current_thread->tid;
-	page->pid=Pid;
-	/*
-	if(){
+	page->pid=current_page++;
+
+	
+	if(current_thread->tid != 1){
+		current_thread->pageNum=current_page;
 	}
 	else{
+		mainPnum = current_thread_page;
 	}
-	
+	/*
 	if(page->pid==0){
 		Segment* 
 	}
@@ -282,7 +285,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 	case THREAD_REQ: //TODO: this case is not finished
 		int current_tid=current_thread->tid;//currently running thread
 		current = (Segment*) UserMem;//starting point for memory location
-		
+		Segment* prev=NULL;
 		//searches for page in swap file and puts it into the physical memory
 		for(int i=0; i<MAX_NUM_PAGES ; i++){
 			if(DiskPages[i]->tid == thread && i != DiskPages[i]->pid){
@@ -303,6 +306,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 		
 		while (current != NULL)
 		{
+			prev = current;
 			//If the amount of space available is equal to the size of the space needed then you return that
 			if (current->test && current->segSpace == size)
 			{
@@ -331,8 +335,10 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 		}
 		
 		//checks how many pages are free and how many we need
-		int pagesRequired = ((SEG_SIZE + size)/SYS_PAGE_SIZE) + 1;
+		int extraBlock = (prev->test == 0) ? SEG_SIZE : 0;
+		int pagesRequired = ((SEG_SIZE + size+ extraBlock)/SYS_PAGE_SIZE) + 1;
 		int amountFree=0;
+		
 		for(int i=0; i<MAX_NUM_PAGES ; i++){
 			if(Pages[i]->isFree){
 				amountFree++;

@@ -61,7 +61,6 @@ typedef struct threadControlBlock {
     my_pthread_t tid;
     my_pthread_t ptid;
     my_pthread_t joinid;
-    int pageNum;
     void * retval;
     void ** join_retval;
     state status; // Created enum state ; would not need this. 0=joined 1=yielded 2=exited 3=running

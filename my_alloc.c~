@@ -13,13 +13,16 @@ void initializePage(int Pid){
 	Page* page=Pages[pid];
 	
 	page->tid=current_thread->tid;
-	page->pid=Pid;
-	/*
-	if(){
+	page->pid=current_page++;
+
+	
+	if(current_thread->tid != 1){
+		current_thread->pageNum=current_page;
 	}
 	else{
+		mainPnum = current_thread_page;
 	}
-	
+	/*
 	if(page->pid==0){
 		Segment* 
 	}
@@ -344,6 +347,10 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 			}
 		}
 		pagesRequired = (amountFree >= pagesRequired) ? pagesRequired : 0;
+		
+		if( pagesRequired > 0 ){
+			
+		}
 		
 		printf("There is no memory left in the SWAP SPACE\nError at line %d of file %s\n", lineCaller, file);
 		return NULL;

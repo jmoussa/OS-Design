@@ -15,7 +15,6 @@ my_pthread_mutex_t LOCK = {0,0,NULL};
 int maintainence_cycle_counter = 0;
 int tcb_num = 1;
 
-
 int current_page=0;
 tcb *current_thread, *main_thread;
 static int Count_time_executed_for_maintainance_cycle = 0;
