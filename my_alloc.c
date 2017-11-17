@@ -289,16 +289,13 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 		break;
 	case THREAD_REQ: //TODO: this case is not finished
 		int current_tid=current_thread->tid;//currently running thread
-		current = (Segment*) UserMem;//starting point for memory location
-		Segment* prev=NULL;
-		//searches for page in swap file and puts it into the physical memory
+		
+        //searches for page in swap file and puts it into the physical memory
 		for(int i=0; i<MAX_NUM_PAGES ; i++){
 			if(DiskPages[i]->tid == thread && i != DiskPages[i]->pid){
 				diskToMem(i,DiskPages[i]->pid);
 			}
 		}
-		////////////////////////////////////////
-		//I'm not sure what this section of code is for
 		Page* page = Pages[0];
 		if(page->tid != thread){
 			if(toFreeMem(0) != 1){
@@ -307,8 +304,10 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 			}
 			initializePage(0);
 		}
-		////////////////////////////////////////
 		
+        current = (Segment*) UserMem;//starting point for memory location
+		Segment* prev=NULL;
+
 		while (current != NULL)
 		{
 			prev = current;
@@ -357,7 +356,50 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 		pagesRequired = (amountFree >= pagesRequired) ? pagesRequired : 0;
 		
 		if( pagesRequired > 0 ){
-			
+			int z, nextPage;
+            if(extraBlock > 0){
+                int nextPage = current_page;
+
+                if(toFreeMem(nextPage) != 1){
+                    if(toDisk(nextPage) != 1){
+                        puts("Disk & Memory FULL. Cannot allocate anymore.\n");
+                        return NULL;
+                    }
+                }
+
+                initializePage(nextPage);
+                Segment* block1 = (Segment*)((char*)UserMem + (nextPage * SYS_PAGE_SIZE));
+                block1->test = 1;
+                block1->segSpace = SYS_PAGE_SIZE - SEG_SIZE;
+                prev->next = block1;
+                prev = block1;
+                z = pagesRequired - 1;
+            }else{
+                z = pagesRequired;
+            }
+            while(z > 0){
+                nextPage = current_thread;
+                if(toFreeMem(nextPage)!=1){
+                    if(toDisk(nextPage)!=1){
+                        puts("Out of Swap Space and Memory Space");
+                        return;
+                    }
+                }
+                initializePage(nextPage);
+                prev->segSpace += SYS_PAGE_SIZE;
+                z--;
+            }
+            current = prev;
+
+            Segment* newBlk = (Segment*) ((char*) current + (size+SEG_SIZE));
+            newBlk->test = 1;
+            newBlk->segSpace = current->segSpace - (size+SEG_SIZE);
+            newBlk->next = current->next;
+
+            current->test = 0;
+            current->segSpace = size;
+            current->next = newBlk;
+            return ((char*) current) + SEG_SIZE;
 		}
 		
 		printf("There is no memory left in the SWAP SPACE\nError at line %d of file %s\n", lineCaller, file);
