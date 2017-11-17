@@ -287,20 +287,29 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq)
 		printf("There is no memory left in the SWAP SPACE\nError at line %d of file %s\n", line, file);
 		return NULL;
 		break;
-	case THREAD_REQ: //TODO: this case is not finished
+	case THREAD_REQ: 
 		int current_tid=current_thread->tid;//currently running thread
 		
-        //searches for page in swap file and puts it into the physical memory
-		for(int i=0; i<MAX_NUM_PAGES ; i++){
-			if(DiskPages[i]->tid == thread && i != DiskPages[i]->pid){
+		int i;
+		//Search for page and swap into physical memory
+		for (i= 0; i < (PHYS_MEM_SIZE / SYS_PAGE_SIZE) - 200; i++) {
+			if(Pages[i]->tid == current_tid && i != Pages[i]->pid)
+				swapPage(i, Pages[i]->pid);
+		}
+		for(i=0; i<MAX_NUM_PAGES ; i++){
+			if(DiskPages[i]->tid == current_tid && i != DiskPages[i]->pid){
 				diskToMem(i,DiskPages[i]->pid);
 			}
 		}
+        
+
 		Page* page = Pages[0];
-		if(page->tid != thread){
+		if(page->tid != current_tid){
 			if(toFreeMem(0) != 1){
-				printf("Could not allocate space\n");
-				return NULL;
+				if(toDisk(0) != 1){
+					printf("Could not allocate space\n");
+					return NULL;
+				}
 			}
 			initializePage(0);
 		}
