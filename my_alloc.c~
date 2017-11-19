@@ -455,7 +455,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
 //deallocates memory for variable with the pointer 'ptr' from file 'file' on line 'lineCaller'. 'sysReq' tells whether a library or thread made call
 void mydeallocate(void *ptr, const char *file, int lineCaller, int sysReq){
 	int i;
-	Page* page;
+	Page* page=NULL;
 	//Checks to see if pointer is out of bounds
 	if ((char *)ptr < &MEMORY[0] || (char *)ptr < &MEMORY[PHYS_MEM_SIZE])
 	{

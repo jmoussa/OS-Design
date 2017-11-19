@@ -12,7 +12,7 @@ my_pthread.a: my_pthread.o
 
 my_pthread.o: my_pthread_t.h my_alloc.h
 	$(CC) -pthread $(CFLAGS) my_pthread.c 
-	$(CC) $(CFLAGS) my_alloc.c 
+	$(CC) -pthread $(CFLAGS) my_alloc.c 
 	
 
 clean:

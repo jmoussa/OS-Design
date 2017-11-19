@@ -6,8 +6,9 @@
 #include <unistd.h>
 
 #include <pthread.h>
-
 #include "../my_pthread_t.h"
+#include "../my_alloc.h"
+
 
 #define DEFAULT_THREAD_NUM 4
 
@@ -95,9 +96,10 @@ int main(int argc, char **argv) {
 	for (i = 0; i < thread_num; ++i)
 		pthread_create(&thread[i], NULL, &parallel_calculate, &counter[i]);
 
-	for (i = 0; i < thread_num; ++i)
-		//printf("Join %d\n",i);
+	for (i = 0; i < thread_num; ++i){
+		printf("Join %d\n",i);
 		pthread_join(thread[i], NULL);
+	}
 
 	printf("sum is: %d\n", sum);
 
