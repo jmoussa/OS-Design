@@ -6,8 +6,10 @@
 // username of iLab: nt284, mam1010, jam791
 // iLab Server: ls
 
-#include <pthread.h>
+//#include <pthread.h>
 #include "my_pthread_t.h"
+
+
 #define THREAD_REQ 1
 #define malloc(x) myallocate(x, __FILE__, __LINE__, THREAD_REQ)
 #define free(x) mydeallocate(x, __FILE__, __LINE__, THREAD_REQ)
