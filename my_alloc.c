@@ -190,7 +190,7 @@ static void sigHandler(int sig, siginfo_t *si, void *unused)
 		printf("SISGEV:SEGMENT FAULT Tried to Access Non user space\n");
 		exit(1);
 	}
-	unsigned long long int loc=(char*) addr-(MAX_NUM_PAGES*SYS_PAGE_SIZE);
+	unsigned long long int loc=(char*)si->si_addr - (char*)(MAX_NUM_PAGES*SYS_PAGE_SIZE);
 	int tarPage=(int) loc/SYS_PAGE_SIZE;//target page number
 	int i;
 	for(i=0; i<MAX_NUM_PAGES ;i++){
@@ -210,7 +210,7 @@ static void sigHandler(int sig, siginfo_t *si, void *unused)
 	for(i=0; i<MAX_NUM_PAGES ; i++){
 		if(Pages[i]->tid == current_thread->tid && Pages[i]->pid==tarPage){
 			diskToMem(tarPage,i);
-			mprotect((MAX_NUM_PAGES*SYS_PAGE_SIZE)+(i*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_READ | PROT_WRITE);
+			mprotect((char*)(MAX_NUM_PAGES*SYS_PAGE_SIZE)+(i*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_READ | PROT_WRITE);
 			swapped=1;
 			break;
 		}
@@ -267,7 +267,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
 	switch (sysReq)
 	{
 	case LIB_REQ: //allocates space the same way you do in the disk
-		current = MEMORY;
+		current = (Segment*)MEMORY;
 		while (current != NULL)
 		{
 			//If the amount of space available is equal to the size of the space needed then you return that
@@ -347,7 +347,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
 			current = current->next; //increments pointer
 		}
 		
-		if(SEG_SIZE + size >((int)((char*) MEMORY + PHYS_MEM_SIZE + SEG_SIZE))){
+		if(SEG_SIZE + size >((int)((char*) MEMORY + PHYS_MEM_SIZE + SEG_SIZE -(char*)prev ))){
 			printf("Error at line %d of file %s\n Not enough memory\n");
 			return NULL;
 		}
@@ -395,7 +395,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
                 z = pagesRequired;
             }
             while(z > 0){
-                nextPage = current_thread;
+                nextPage = current_tid;
                 if(toFreeMem(nextPage)!=1){
                     if(toDisk(nextPage)!=1){
                         puts("Out of Swap Space and Memory Space");
@@ -423,7 +423,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
 		return NULL;
 		break;
 	case DISK_REQ:
-		current = SWAP;
+		current = (Segment*)SWAP;
 		while (current != NULL)
 		{
 			//If the amount of space available is equal to the size of the space needed then you return that
@@ -463,7 +463,7 @@ void mydeallocate(void *ptr, const char *file, int lineCaller, int sysReq){
 		return;
 	}
 	//Gets segment pointer to the block that is to be freed
-	Segment *sec = ((char *)ptr - SEG_SIZE); //SEG_SIZE is removed since the pointer points to the variable and not the segment data
+	Segment *sec = (Segment*) ((char *)ptr - SEG_SIZE); //SEG_SIZE is removed since the pointer points to the variable and not the segment data
 	//Makes sure sections hasn't been freed already
 	if (sec->test)
 	{
@@ -546,7 +546,7 @@ void *shalloc(size_t size)
 			current = current->next; //increments pointer
 		}
 		
-		if(SEG_SIZE + size >((int)((char*) MEMORY + PHYS_MEM_SIZE + SEG_SIZE))){
+		if(SEG_SIZE + size >((int)((char*) MEMORY + PHYS_MEM_SIZE + SEG_SIZE - (char*)prev ))){
 			printf("Error at line %d of file %s\n Not enough memory\n");
 			return NULL;
 		}
@@ -583,7 +583,7 @@ void *shalloc(size_t size)
                 z = pagesRequired;
             }
             while(z > 0){
-                nextPage = current_thread;
+                nextPage = current_tid;
                 initializePage(nextPage);
                 prev->segSpace += SYS_PAGE_SIZE;
                 z--;

@@ -1,9 +1,9 @@
 #ifndef MY_ALLOC_H
 #define MY_ALLOC_H
 
-#define _GNU_SOURCE
 
 #include "my_pthread_t.h"
+
 #include <malloc.h>
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -56,7 +56,5 @@ int freeMem(Segment *block, Page *page, int sysReq);
 void swapPage(int source, int dest);//gets passed page ids
 void diskToMem(int source,int dest);//gets passed page ids
 void *shalloc(size_t size);
-
-
 
 #endif
