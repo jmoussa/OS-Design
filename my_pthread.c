@@ -2,8 +2,8 @@
 // Author:	Yujie REN
 // Date:	09/23/2017
 
-// name: Anil Tilve,Matthew Mann, Joseph Moussa
-// username of iLab: nt284, mam1010, jam791
+// name: Anil Tilve, Matthew Mann, Joseph Moussa
+// username of iLab: amt223, mam1010, jam791
 // iLab Server: ls
 
 //#include <pthread.h>
