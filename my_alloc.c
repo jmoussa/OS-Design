@@ -585,7 +585,7 @@ void *shalloc(size_t size){
 		}
 		
 		if(SEG_SIZE + size >((int)((char*) MEMORY + PHYS_MEM_SIZE + SEG_SIZE - (char*)prev ))){
-			printf("Error at line %d of file %s\n Not enough memory\n",lineCaller,file);
+			printf("Error at line %d of file %s\n Not enough memory\n",__LINE__,__FILE__);
 			return NULL;
 		}
 		
