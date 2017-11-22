@@ -13,12 +13,7 @@ static char* UserDisk=NULL;
 //Initializes a page
 void initializePage(int Pid){
 	Page* page=Pages[Pid];//gets page from array
-	if(current_thread!=NULL){//sets the thread id associated with the page
-		current_tid=current_thread->tid;
-	}
-	else{
-		current_tid=0;
-	}
+	
 
 	page->tid=current_tid;
 	page->pid=current_page++;//Sets the page number
@@ -190,13 +185,7 @@ int toDisk(int target){
 //signal handler
 static void sigHandler(int sig, siginfo_t *si, void *unused){
 	printf("Handler Called\n");
-	if(current_thread!=NULL){
-		printf("Here\n");
-		current_tid=current_thread->tid;
-	}
-	else{
-		current_tid=0;
-	}
+	
 	int swapped=0;
 	char *addr = si->si_addr;//The address of the memory trying to be accessed
 	if((addr > MEMORY + PHYS_MEM_SIZE || addr < MEMORY) && (addr < UserDisk || addr > SWAP+SWAP_FILE_SIZE)){//checks to see if this is outside the physical and swap memory
@@ -389,7 +378,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
 		}
 		
 		if( (SEG_SIZE + size) >((int)((char*) MEMORY + PHYS_MEM_SIZE + SEG_SIZE -(char*)prev ))){
-			printf("Error at line %d of file %s\n Not enough memory\n");
+			printf("Error at line %d of file %s\n Not enough memory\n",lineCaller,file);
 			return NULL;
 		}
 		printf("Here4\n");
@@ -446,7 +435,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
                 	  printf("Here12\n");
                     if(toDisk(nextPage)!=1){
                         puts("Out of Swap Space and Memory Space");
-                        return;
+                        return NULL;
                     }
                 }
                 initializePage(nextPage);

@@ -378,7 +378,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
 		}
 		
 		if( (SEG_SIZE + size) >((int)((char*) MEMORY + PHYS_MEM_SIZE + SEG_SIZE -(char*)prev ))){
-			printf("Error at line %d of file %s\n Not enough memory\n");
+			printf("Error at line %d of file %s\n Not enough memory\n",lineCaller,file);
 			return NULL;
 		}
 		printf("Here4\n");
@@ -435,7 +435,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
                 	  printf("Here12\n");
                     if(toDisk(nextPage)!=1){
                         puts("Out of Swap Space and Memory Space");
-                        return;
+                        return NULL;
                     }
                 }
                 initializePage(nextPage);
@@ -585,7 +585,7 @@ void *shalloc(size_t size){
 		}
 		
 		if(SEG_SIZE + size >((int)((char*) MEMORY + PHYS_MEM_SIZE + SEG_SIZE - (char*)prev ))){
-			printf("Error at line %d of file %s\n Not enough memory\n");
+			printf("Error at line %d of file %s\n Not enough memory\n",lineCaller,file);
 			return NULL;
 		}
 		
