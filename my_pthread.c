@@ -9,20 +9,24 @@
 //#include <pthread.h>
 #include "my_pthread_t.h"
 
+
+
+#include <errno.h>
+
 #define THREAD_REQ 1
 #define malloc(x) myallocate(x, __FILE__, __LINE__, THREAD_REQ)
 #define free(x) mydeallocate(x, __FILE__, __LINE__, THREAD_REQ)
 
-#include <errno.h>
-
 int current_page=0;
 int mainPnum=0;
+int current_tid=0;
 
 int start = 1;
 
 my_pthread_mutex_t LOCK = {0,0,NULL};
 int maintainence_cycle_counter = 0;
 int tcb_num = 1;
+
 
 
 tcb *current_thread, *main_thread;

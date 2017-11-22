@@ -8,8 +8,8 @@ RANLIB = ranlib
 
 Target: my_pthread.a
 
-my_pthread.a: my_pthread.o
-	$(AR) libmy_pthread.a my_pthread.o
+my_pthread.a: my_alloc.o my_pthread.o 
+	$(AR) libmy_pthread.a my_alloc.o my_pthread.o 
 	$(RANLIB) libmy_pthread.a
 
 my_alloc.o: my_alloc.h  my_pthread_t.h 

@@ -7,11 +7,11 @@
 // iLab Server:
 #ifndef MY_PTHREAD_T_H
 #define MY_PTHREAD_T_H
-#include "my_alloc.h"
 
 
 #define _GNU_SOURCE
 #define USE_MY_PTHREAD 1
+
 
 
 /* include lib header files that you need here: */
@@ -33,7 +33,7 @@
 //Check for starvation every 50 quanta
 #define MAINTAINENCE_CYCLE_THRESHOLD 50
 
-
+#include "my_alloc.h"
 
 //Thread states
 typedef enum state
@@ -96,6 +96,7 @@ tcb *tcbs[1000]; // all the tcbs that you could have are intialized.
 tcb *current_thread;
 extern int current_page;
 extern int mainPnum;
+extern int current_tid;
 //pointers to back of each queue
 struct Node* back[6];
 

@@ -4,6 +4,8 @@
 
 #include "my_pthread_t.h"
 
+
+
 #include <malloc.h>
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -28,8 +30,9 @@
 #define THREAD_REQ 1
 #define DISK_REQ 2
 #define SEG_SIZE sizeof(Segment)
-#define MAX_NUM_PAGES 50 //sets a max for number of pages (This prevents pages from taking up all the memory)
-
+#define LIB_PAGES 200
+#define MAX_NUM_PAGES (PHYS_MEM_SIZE/SYS_PAGE_SIZE) -  LIB_PAGES//sets a max for number of pages (This prevents pages from taking up all the memory)
+#define MAX_SWAP (SWAP_FILE_SIZE/SYS_PAGE_SIZE) - 100
 
 
 

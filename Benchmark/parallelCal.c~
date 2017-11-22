@@ -7,7 +7,8 @@
 
 #include <pthread.h>
 #include "../my_pthread_t.h"
-#include "../my_alloc.h"
+#define malloc(x) myallocate(x, __FILE__, __LINE__, THREAD_REQ)
+#define free(x) mydeallocate(x, __FILE__, __LINE__, THREAD_REQ)
 
 
 #define DEFAULT_THREAD_NUM 4
@@ -73,7 +74,9 @@ int main(int argc, char **argv) {
 	}
 
 	// initialize counter
+	printf("Para1\n");
 	counter = (int*)malloc(thread_num*sizeof(int));
+	printf("Para2\n");
 	for (i = 0; i < thread_num; ++i)
 		counter[i] = i;
 

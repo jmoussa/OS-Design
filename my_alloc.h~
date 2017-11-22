@@ -4,6 +4,8 @@
 
 #include "my_pthread_t.h"
 
+
+
 #include <malloc.h>
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -28,8 +30,9 @@
 #define THREAD_REQ 1
 #define DISK_REQ 2
 #define SEG_SIZE sizeof(Segment)
-#define MAX_NUM_PAGES 50 //sets a max for number of pages (This prevents pages from taking up all the memory)
-
+#define LIB_PAGES 100
+#define MAX_NUM_PAGES (PHYS_MEM_SIZE/SYS_PAGE_SIZE) -  LIB_PAGES//sets a max for number of pages (This prevents pages from taking up all the memory)
+#define MAX_SWAP (SWAP_FILE_SIZE/SYS_PAGE_SIZE) - 100
 
 
 
@@ -49,12 +52,12 @@ typedef struct Segment_t
 
 void *myallocate(size_t size, const char *file, int lineCaller, int sysReq);
 void mydeallocate(void *ptr, const char *file, int lineCaller, int sysReq);
-//void initializePage(int pid);
-//int toFreeMem(int target);//gets passed a page id
-//int toDisk(int target);//gets passed a page id
-//int freeMem(Segment *block, Page *page, int sysReq);
-//void swapPage(int source, int dest);//gets passed page ids
-//void diskToMem(int source,int dest);//gets passed page ids
-//void *shalloc(size_t size);
+void initializePage(int pid);
+int toFreeMem(int target);//gets passed a page id
+int toDisk(int target);//gets passed a page id
+int freeMem(Segment *block, Page *page, int sysReq);
+void swapPage(int source, int dest);//gets passed page ids
+void diskToMem(int source,int dest);//gets passed page ids
+void *shalloc(size_t size);
 
 #endif
