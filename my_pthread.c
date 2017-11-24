@@ -277,7 +277,6 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
      my_tcb->thread_params.readyTime = get_current_time();
     printf("Thread created ID=%d\n",my_tcb->tid);
     my_enqueue(&Queue[0],my_tcb);//adds TCB to priority queue
-   
     sigprocmask(SIG_UNBLOCK, &sigProcMask, NULL);
     scheduler();
     return 0;

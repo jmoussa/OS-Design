@@ -19,7 +19,7 @@ void initializePage(int Pid){
 	page->pid=current_page++;//Sets the page number
 	printf("Here12\n");	
 	
-	if(current_tid != 0){
+	if(current_tid != 0){// updates page number associated with the thread to be the current page
 		if(current_thread!=NULL){
 			current_thread->pageNum=current_page;
 		}
@@ -27,13 +27,13 @@ void initializePage(int Pid){
 			current_page=current_page;
 		}
 	}
-	else{
+	else{//if the thread running is the main thread then 
 		mainPnum = current_page;
 	}
    page->isFree = 0;
    printf("Here13\n");
 	if(page->pid==0){
-		firstSeg= (Segment*) UserMem;
+		Segment* firstSeg= (Segment*) UserMem;
       firstSeg->test = 1;
       firstSeg->segSpace = SYS_PAGE_SIZE - SEG_SIZE;
       firstSeg->next = NULL;
@@ -50,49 +50,45 @@ int freeMem(Segment *block, Page *page, int sysReq){
 	{
 	case LIB_REQ:
 		//If the library called it then start at the beginning if the physical memory
-		current = (Segment*) MEMORY;
+		current = firstSeg;
 		break;
 	case THREAD_REQ:
 		//Looks for page that deallocate wants
 		for ( i = 0; i < MAX_NUM_PAGES ; i++){
-			if (Pages[i]->tid == page->tid)
-			{
-				current = (Segment *)(SYS_PAGE_SIZE * i);
+			if (Pages[i]->tid == page->tid){
+				current = (Segment *)UserMem + (SYS_PAGE_SIZE * i);
 				break;
 			}
 		}
 		break; //page could not be found
 	}
-	if (current == NULL)
-	{
+	if (current == NULL){
+		printf("Here\n");
 		return 0; //could not find memory meant to be freed
 	}
-	while (current != NULL)
-	{
-		if (current == block)
-		{
+	while (current != NULL){
+		if (current == block){
 			current->test = 1;				//frees memory
 			Segment *after = current->next; //looks at next segment
-			if (after != NULL && after->test)
-			{ //Merges this segment with one before it if it is also free
+			
+			if (after != NULL && after->test){ //Merges this segment with one before it if it is also free
 				current->segSpace += after->segSpace + SEG_SIZE;
 				current->next = after->next;
 			}
-			if (previous != NULL && previous->test)
-			{ //Merges this segment with one after it if it is also free
-				current->segSpace += previous->segSpace + SEG_SIZE;
-				current->next = previous->next;
+			if (previous != NULL && previous->test){ //Merges this segment with one after it if it is also free
+				previous->segSpace += current->segSpace + SEG_SIZE;
+				previous->next = current->next;
 			}
 			return 1; //successful
 		}
-		else
-		{
+		else{
 			//increments values
 			previous = current;
-			current = current->next;
 		}
-		return 0;
+		current = current->next;
 	}
+	printf("Here\n");
+	return 0;
 }
 //swaps pages
 void swapPage(int source, int dest){
@@ -115,6 +111,7 @@ void swapPage(int source, int dest){
 	mprotect(UserMem+(dest*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_NONE);
 	mprotect(UserMem+(source*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_NONE);//Protect both of the memory sections being swapped
 	
+	current_thread=peek().front;
 }
 //swaps pages from disk to physical memory
 void diskToMem(int source,int dest){
@@ -136,6 +133,8 @@ void diskToMem(int source,int dest){
 	//unprotect the memory since it is done being moved
 	mprotect(UserMem+(dest*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_NONE);
 	mprotect(UserDisk+(source*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_NONE);//Protect both of the memory sections being swapped
+	
+	current_thread=peek().front;
 }
 //
 int toFreeMem(int target){
@@ -152,6 +151,7 @@ int toFreeMem(int target){
 				Pages[target]->isFree = 1;
 				mprotect(UserMem+(target*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_NONE);
 				
+				current_thread=peek().front;
 				return 1;
 				
 			}
@@ -176,6 +176,7 @@ int toDisk(int target){
 				
 				mprotect(UserMem+(target*SYS_PAGE_SIZE),SYS_PAGE_SIZE,PROT_NONE);
 				
+				current_thread=peek().front;
 				return 1;
 			}
 		}
@@ -319,7 +320,6 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
 		break;
 	case THREAD_REQ:
 		if(current_thread!=NULL){
-			printf("Why though\n");
 			current_tid=current_thread->tid;
 		}
 		else{
@@ -413,11 +413,11 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
                         return NULL;
                     }
                 }
-					 if(nextPage>((PHYS_MEM_SIZE/SYS_PAGE_SIZE)-4)){
-					 	printf("Here9\n");
-					 	printf("This is the shared space\n");
-					 	return NULL;
-					 }
+					 //if(nextPage>((PHYS_MEM_SIZE/SYS_PAGE_SIZE)-4)){
+					 //	printf("Here9\n");
+					 //	printf("This is the shared space\n");
+					 //	return NULL;
+					 //}
                 initializePage(nextPage);
                 Segment* block1 = (Segment*)((char*)UserMem + (nextPage * SYS_PAGE_SIZE));
                 block1->test = 1;
@@ -431,6 +431,7 @@ void *myallocate(size_t size, const char *file, int lineCaller, int sysReq){
             while(z > 0){
             	 printf("Here10\n");
                 nextPage = current_tid;
+                printf("Here\n");
                 if(toFreeMem(nextPage)!=1){
                 	  printf("Here12\n");
                     if(toDisk(nextPage)!=1){
@@ -496,8 +497,7 @@ void mydeallocate(void *ptr, const char *file, int lineCaller, int sysReq){
 	int i;
 	Page* page;
 	//Checks to see if pointer is out of bounds
-	if ((char *)ptr < &MEMORY[0] || (char *)ptr < &MEMORY[PHYS_MEM_SIZE])
-	{
+	if ((char *)ptr < &MEMORY[0] && (char *)ptr >= &MEMORY[PHYS_MEM_SIZE]){
 		printf("Free Error at line %d of file %s\n", lineCaller, file);
 		return;
 	}
@@ -507,22 +507,23 @@ void mydeallocate(void *ptr, const char *file, int lineCaller, int sysReq){
 	if (sec->test)
 	{
 		printf("Error at line %d in file %s. Block has already been freed.\n", lineCaller, file);
+		return;
 	}
 	//how memory is freed depends on the sysReq that called it
 	switch (sysReq)
 	{
 	case LIB_REQ:
-		if (!freeMem(sec, NULL, LIB_REQ))
-		{ //frees mem and checks to see it works
+		if ( !freeMem(sec, NULL, LIB_REQ) ){ //frees mem and checks to see it works
 			printf("Error at lin %d in file %s. Unable to free memory for library request.\n", lineCaller, file);
 		}
+		return;
 		break;
 	case THREAD_REQ:
 	
 		//finds page to be deallocated
 		for (i = 0; i < MAX_NUM_PAGES ; i++)
 		{
-			if (Pages[i]->tid == current_thread->tid)
+			if (Pages[i]->tid == current_tid)
 			{
 				page = Pages[i];
 			}
@@ -585,7 +586,7 @@ void *shalloc(size_t size){
 		}
 		
 		if(SEG_SIZE + size >((int)((char*) MEMORY + PHYS_MEM_SIZE + SEG_SIZE - (char*)prev ))){
-			printf("Error at line %d of file %s\n Not enough memory\n",lineCaller,file);
+			printf("Error at line %d of file %s\n Not enough memory\n",__LINE__,__FILE__);
 			return NULL;
 		}
 		
