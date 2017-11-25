@@ -185,7 +185,7 @@ static void sigHandler(int sig, siginfo_t *si, void *unused){
 	//printf("Handler Called\n");
 	
 	int swapped=0;
-	char *addr = si->si_addr;//The address of the memory trying to be accessed
+	char *addr = (char*)si->si_addr;//The address of the memory trying to be accessed
 	if((addr > MEMORY + PHYS_MEM_SIZE || addr < MEMORY) && (addr < UserDisk || addr > SWAP+SWAP_FILE_SIZE)){//checks to see if this is outside the physical and swap memory
 		printf("SISGEV:SEGMENT FAULT Outside of Memory\n");
 		exit(1);
